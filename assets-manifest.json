@@ -1,0 +1,195 @@
+{
+  "figmaFile": "91cHpDWFyA9XmEFbw0Y5vN",
+  "assets": [
+    {
+      "file": "assets/iam/login_imgIosSignal.svg",
+      "node": "9:12258",
+      "bytes": 1186
+    },
+    {
+      "file": "assets/iam/login_imgIosWifiSignal.svg",
+      "node": "9:12258",
+      "bytes": 1618
+    },
+    {
+      "file": "assets/iam/login_imgIosBatteryFull.svg",
+      "node": "9:12258",
+      "bytes": 2561
+    },
+    {
+      "file": "assets/iam/login_imgSparkles.svg",
+      "node": "9:12258",
+      "bytes": 1968
+    },
+    {
+      "file": "assets/iam/login_imgMail.svg",
+      "node": "9:12258",
+      "bytes": 684
+    },
+    {
+      "file": "assets/iam/login_imgEyeOff.svg",
+      "node": "9:12258",
+      "bytes": 1147
+    },
+    {
+      "file": "assets/iam/login_imgArrowRight.svg",
+      "node": "9:12258",
+      "bytes": 335
+    },
+    {
+      "file": "assets/iam/login_imgApple.svg",
+      "node": "9:12258",
+      "bytes": 1292
+    },
+    {
+      "file": "assets/iam/onboarding_0_imgIosSignal.svg",
+      "node": "9:12135",
+      "bytes": 1186
+    },
+    {
+      "file": "assets/iam/onboarding_0_imgIosWifiSignal.svg",
+      "node": "9:12135",
+      "bytes": 1618
+    },
+    {
+      "file": "assets/iam/onboarding_0_imgIosBatteryFull.svg",
+      "node": "9:12135",
+      "bytes": 2561
+    },
+    {
+      "file": "assets/iam/onboarding_0_imgOrbit.svg",
+      "node": "9:12135",
+      "bytes": 474
+    },
+    {
+      "file": "assets/iam/onboarding_0_imgStatusDot.svg",
+      "node": "9:12135",
+      "bytes": 230
+    },
+    {
+      "file": "assets/iam/onboarding_1_imgFashionObject.png",
+      "node": "9:12152",
+      "bytes": 263753
+    },
+    {
+      "file": "assets/iam/onboarding_1_imgFashionObject1.png",
+      "node": "9:12152",
+      "bytes": 639803
+    },
+    {
+      "file": "assets/iam/onboarding_1_imgFashionObject2.png",
+      "node": "9:12152",
+      "bytes": 603064
+    },
+    {
+      "file": "assets/iam/onboarding_1_imgFashionObject3.png",
+      "node": "9:12152",
+      "bytes": 522925
+    },
+    {
+      "file": "assets/iam/onboarding_1_imgIosSignal.svg",
+      "node": "9:12152",
+      "bytes": 1186
+    },
+    {
+      "file": "assets/iam/onboarding_1_imgIosWifiSignal.svg",
+      "node": "9:12152",
+      "bytes": 1618
+    },
+    {
+      "file": "assets/iam/onboarding_1_imgIosBatteryFull.svg",
+      "node": "9:12152",
+      "bytes": 2561
+    },
+    {
+      "file": "assets/iam/onboarding_1_imgArrowRight.svg",
+      "node": "9:12152",
+      "bytes": 335
+    },
+    {
+      "file": "assets/iam/onboarding_2_imgFashionObject.png",
+      "node": "9:12189",
+      "bytes": 571075
+    },
+    {
+      "file": "assets/iam/onboarding_2_imgFashionObject1.png",
+      "node": "9:12189",
+      "bytes": 838704
+    },
+    {
+      "file": "assets/iam/onboarding_2_imgFashionObject2.png",
+      "node": "9:12189",
+      "bytes": 536307
+    },
+    {
+      "file": "assets/iam/onboarding_2_imgFashionObject3.png",
+      "node": "9:12189",
+      "bytes": 383894
+    },
+    {
+      "file": "assets/iam/onboarding_2_imgIosSignal.svg",
+      "node": "9:12189",
+      "bytes": 1186
+    },
+    {
+      "file": "assets/iam/onboarding_2_imgIosWifiSignal.svg",
+      "node": "9:12189",
+      "bytes": 1618
+    },
+    {
+      "file": "assets/iam/onboarding_2_imgIosBatteryFull.svg",
+      "node": "9:12189",
+      "bytes": 2561
+    },
+    {
+      "file": "assets/iam/onboarding_2_imgOutfitOrbit.svg",
+      "node": "9:12189",
+      "bytes": 488
+    },
+    {
+      "file": "assets/iam/onboarding_2_imgArrowRight.svg",
+      "node": "9:12189",
+      "bytes": 335
+    },
+    {
+      "file": "assets/iam/onboarding_3_imgFashionObject.png",
+      "node": "9:12221",
+      "bytes": 223989
+    },
+    {
+      "file": "assets/iam/onboarding_3_imgArCameraPreview.png",
+      "node": "9:12221",
+      "bytes": 89035
+    },
+    {
+      "file": "assets/iam/onboarding_3_imgAiOutfitPreview.png",
+      "node": "9:12221",
+      "bytes": 85674
+    },
+    {
+      "file": "assets/iam/onboarding_3_imgIosSignal.svg",
+      "node": "9:12221",
+      "bytes": 1186
+    },
+    {
+      "file": "assets/iam/onboarding_3_imgIosWifiSignal.svg",
+      "node": "9:12221",
+      "bytes": 1618
+    },
+    {
+      "file": "assets/iam/onboarding_3_imgIosBatteryFull.svg",
+      "node": "9:12221",
+      "bytes": 2561
+    },
+    {
+      "file": "assets/iam/onboarding_3_imgRotate3D.svg",
+      "node": "9:12221",
+      "bytes": 1082
+    },
+    {
+      "file": "assets/iam/onboarding_3_imgArrowRight.svg",
+      "node": "9:12221",
+      "bytes": 335
+    }
+  ]
+}

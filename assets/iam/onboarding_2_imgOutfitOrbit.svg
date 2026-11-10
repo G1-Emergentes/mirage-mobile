@@ -1,0 +1,6 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="299" height="228" viewBox="0 0 299 228" fill="none" xmlns="http://www.w3.org/2000/svg">
+<mask id="stroke0_0_6" fill="white">
+<path d="M299 114C299 176.96 232.067 228 149.5 228C66.9334 228 0 176.96 0 114C0 51.0395 66.9334 0 149.5 0C232.067 0 299 51.0395 299 114Z"/>
+</mask>
+<ellipse id="Outfit orbit" cx="149.5" cy="114" rx="149.5" ry="114" stroke-width="3" stroke="white" mask="url(#stroke0_0_6)"/>
+</svg>
