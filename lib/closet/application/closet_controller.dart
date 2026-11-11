@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+
 import '../domain/closet_repository.dart';
 import '../domain/garment.dart';
 
@@ -77,11 +78,23 @@ class ClosetController extends ChangeNotifier {
     }
   }
 
-  Future<Garment> save(String id, GarmentDraft draft) async {
+  Future<Garment> save(
+    String id,
+    GarmentDraft draft, {
+    Uint8List? photo,
+    String? contentType,
+  }) async {
     final updated = await repository.update(id, draft);
     garments = [for (final g in garments) g.id == id ? updated : g];
     _links.remove(id);
     notifyListeners();
+    if (photo != null && contentType != null) {
+      final withImage = await repository.attachImage(id, photo, contentType);
+      garments = [for (final g in garments) g.id == id ? withImage : g];
+      _links.remove(id);
+      notifyListeners();
+      return withImage;
+    }
     return updated;
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../shared/theme/mirage_theme.dart';
 import '../../shared/widgets/mirage_components.dart';
 import '../application/closet_controller.dart';
@@ -7,6 +8,7 @@ import '../closet_module.dart';
 import '../domain/closet_repository.dart';
 import '../domain/garment.dart';
 import 'add_item_screen.dart';
+import 'accessory_3d_screen.dart';
 import 'closet_widgets.dart';
 
 /// One piece: photo, details, "Add to Outfit", edit and delete.
@@ -160,14 +162,20 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 Positioned(
                   top: 14,
                   left: 14,
-                  child: Tag(garment.available ? 'IN YOUR CLOSET' : 'UNAVAILABLE'),
+                  child: Tag(
+                    garment.available ? 'IN YOUR CLOSET' : 'UNAVAILABLE',
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 18),
             Text(
               garment.name,
-              style: const TextStyle(fontFamily: 'Lora', fontSize: 30, height: 1.15),
+              style: const TextStyle(
+                fontFamily: 'Lora',
+                fontSize: 30,
+                height: 1.15,
+              ),
             ),
             const SizedBox(height: 10),
             _row('Category', garment.kind),
@@ -183,11 +191,29 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   ? '—'
                   : garment.styles.map(humanize).join(' / '),
             ),
-            _row('Availability', garment.available ? 'Available' : 'Unavailable'),
+            _row(
+              'Availability',
+              garment.available ? 'Available' : 'Unavailable',
+            ),
             const SizedBox(height: 18),
             if (error != null) ...[
               MirageNotice(error!, error: true),
               const SizedBox(height: 12),
+            ],
+            if (garment.model3dCategory != null) ...[
+              MirageButton(
+                label: 'View in 3D',
+                arrow: false,
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => Accessory3dScreen(
+                      garment: garment,
+                      api: widget.module.accessoryModels,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
             ],
             inTray
                 ? OutlinedButton(

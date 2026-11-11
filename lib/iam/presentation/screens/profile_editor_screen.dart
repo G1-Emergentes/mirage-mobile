@@ -6,6 +6,7 @@ import '../../../shared/network/api_client.dart';
 import '../../../shared/widgets/mirage_components.dart';
 import '../../../shared/widgets/mirage_feature_components.dart';
 import '../../infrastructure/dio_profile_repository.dart';
+import 'measurement_model_screen.dart';
 
 class ProfileEditorScreen extends StatefulWidget {
   const ProfileEditorScreen({
@@ -148,6 +149,31 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     }
   }
 
+  void _generateModel() {
+    if (_saving || !_form.currentState!.validate()) return;
+    final measurements = {
+      for (final entry in _inputs.entries)
+        entry.key: _number(entry.value.text)!,
+    };
+    for (final entry in measurementModelLimits.entries) {
+      final (min, max) = entry.value;
+      final value = measurements[entry.key]!;
+      if (value < min || value > max) {
+        setState(
+          () => _error =
+              '${_fields[entry.key]}: el modelo admite de $min a $max cm.',
+        );
+        return;
+      }
+    }
+    setState(() => _error = null);
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => MeasurementModelScreen(measurements: measurements),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     for (final input in _inputs.values) {
@@ -211,6 +237,13 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                   busy: _saving,
                   onPressed: _save,
                 ),
+                if (widget.section == ProfileSection.measurements) ...[
+                  const SizedBox(height: 10),
+                  MirageButton(
+                    label: 'Generar modelo 3D',
+                    onPressed: _saving ? null : _generateModel,
+                  ),
+                ],
               ],
             ),
           ),

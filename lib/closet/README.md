@@ -41,3 +41,26 @@ Del diseño que **todavía no existe en el servidor** y por eso no está en la a
 ```powershell
 flutter test --no-pub test/closet_logic_test.dart test/closet_screens_test.dart
 ```
+## Modelos 3D de accesorios
+
+En **Closet → Add Item**, agrega una foto, elige **Accessory** y selecciona
+**Glasses**, **Sunglasses**, **Cap** o **Hat**. En el detalle del accesorio,
+abre **View in 3D** y toca **Create 3D model**. El visor permite girar y ampliar
+el modelo. Si cambias la foto en **Edit Item**, la app te permite actualizarlo.
+
+La foto se sube primero a Digital Closet. Virtual Try-On recupera la foto
+asociada al accesorio y entrega el GLB autenticado en
+`/api/v1/try-on/garments/{id}/model`. El visor recibe los bytes del GLB y
+las credenciales de Supabase se configuran en el backend.
+
+En el emulador Android, `ACCESSORY_3D_BASE_URL` usa por defecto
+`http://10.0.2.2:8000/api/v1/try-on`. Si IAM se ejecuta en otro puerto,
+por ejemplo 18080, inicia Flutter con
+`--dart-define=API_BASE_URL=http://10.0.2.2:18080`. Si Digital Closet devuelve
+URLs firmadas con `127.0.0.1:54421` para Supabase local, ejecuta
+`adb reverse tcp:54421 tcp:54421`.
+
+Para probar únicamente el envío multipart contra un Virtual Try-On en modo
+local, inicia una compilación debug con
+`--dart-define=ACCESSORY_3D_LOCAL_UPLOAD=true`. El visor ofrecerá elegir una
+foto y enviará el campo `image` al API.
