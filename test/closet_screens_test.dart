@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:miragemobile/avatar/application/person_photo.dart';
 import 'package:miragemobile/closet/closet_module.dart';
 import 'package:miragemobile/closet/domain/closet_repository.dart';
+import 'package:miragemobile/closet/domain/outfit.dart';
 import 'package:miragemobile/closet/presentation/add_item_screen.dart';
 import 'package:miragemobile/closet/presentation/closet_screen.dart';
 import 'package:miragemobile/closet/presentation/closet_widgets.dart';
@@ -15,6 +16,7 @@ Future<ClosetModule> openCloset(
   WidgetTester tester, {
   FakeCloset? closet,
   FakeTryOn? tryOn,
+  FakeOutfits? outfits,
 }) async {
   tester.view.physicalSize = const Size(390, 1400);
   tester.view.devicePixelRatio = 1;
@@ -36,6 +38,7 @@ Future<ClosetModule> openCloset(
     closetRepository: repository,
     tryOnRepository:
         tryOn ?? FakeTryOn([TryOnState.pending, TryOnState.ready]),
+    outfitRepository: outfits ?? FakeOutfits(),
   );
   addTearDown(module.dispose);
   await tester.pumpWidget(
@@ -103,10 +106,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Everyday tee'), findsOneWidget);
     expect(find.text('IN YOUR CLOSET'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('toggle-outfit')));
+    expect(find.byKey(const ValueKey('armar')), findsOneWidget);
+    // The tray is filled from a saved outfit (see the outfit tests below).
+    module.tray.toggle(module.closet.garments.firstWhere((g) => g.id == 'a'));
     await tester.pumpAndSettle();
-    expect(module.tray.contains('a'), isTrue);
-    expect(find.text('Remove from Outfit'), findsOneWidget);
     // Back to My Closet: the outfit bar offers the try-on.
     await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
@@ -147,10 +150,72 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('tile-e')));
     await tester.pumpAndSettle();
     expect(find.text('UNAVAILABLE'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('toggle-outfit')));
+    await tester.tap(find.byKey(const ValueKey('armar')));
     await tester.pumpAndSettle();
     expect(find.text('This piece is not available right now.'), findsOneWidget);
     expect(module.tray.isEmpty, isTrue);
+  });
+
+  testWidgets('Armar: create an outfit with name and style, then add another piece to it', (tester) async {
+    final outfits = FakeOutfits();
+    await openCloset(tester, outfits: outfits);
+    await tester.tap(find.byKey(const ValueKey('group-tops')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tile-a')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('armar')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('no outfits yet'), findsOneWidget);
+    // The sticky button creates a new outfit with its details.
+    await tester.tap(find.byKey(const ValueKey('crear-outfit')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('outfit-form-save')));
+    await tester.pumpAndSettle();
+    expect(find.text('Give your outfit a name.'), findsOneWidget);
+    await tester.enterText(find.byKey(const ValueKey('outfit-name')), 'Oficina');
+    await tester.tap(find.byKey(const ValueKey('style-CASUAL')));
+    await tester.enterText(find.byKey(const ValueKey('outfit-occasion')), 'Trabajo');
+    await tester.tap(find.byKey(const ValueKey('outfit-form-save')));
+    await tester.pumpAndSettle();
+    expect(outfits.saved, hasLength(1));
+    expect(outfits.saved.single.name, 'Oficina');
+    expect(outfits.saved.single.style, 'CASUAL');
+    expect(outfits.saved.single.occasion, 'Trabajo');
+    expect(outfits.saved.single.garmentIds, ['a']);
+    // Another piece goes into that outfit from the list.
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tile-b')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('armar')));
+    await tester.pumpAndSettle();
+    expect(find.text('Oficina'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('armar-o0')));
+    await tester.pumpAndSettle();
+    expect(outfits.saved.single.garmentIds, ['a', 'b']);
+  });
+
+  testWidgets('a saved outfit opens, drops a piece and keeps its look only while the pieces match', (tester) async {
+    final outfits = FakeOutfits();
+    await outfits.create(
+      const OutfitDetails(name: 'Fiesta', style: 'FORMAL'),
+      ['a', 'b'],
+    );
+    await outfits.attachImage('o0', Uint8List(1), 'image/png');
+    final module = await openCloset(tester, outfits: outfits);
+    await tester.ensureVisible(find.byKey(const ValueKey('saved-outfits')));
+    await tester.tap(find.byKey(const ValueKey('saved-outfits')));
+    await tester.pumpAndSettle();
+    expect(find.text('Fiesta'), findsOneWidget);
+    expect(find.text('LOOK SAVED'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('outfit-o0')));
+    await tester.pumpAndSettle();
+    expect(find.text('Formal'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('drop-b')));
+    await tester.tap(find.byKey(const ValueKey('drop-b')));
+    await tester.pumpAndSettle();
+    expect(module.outfits.byId('o0')!.garmentIds, ['a']);
+    expect(module.outfits.byId('o0')!.hasImage, isFalse);
   });
 
   testWidgets('a failed look explains what to do and can be retried', (tester) async {
