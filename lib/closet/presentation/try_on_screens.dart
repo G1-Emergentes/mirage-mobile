@@ -7,6 +7,7 @@ import '../application/try_on_controller.dart';
 import '../closet_module.dart';
 import '../domain/closet_repository.dart';
 import 'closet_widgets.dart';
+import 'saved_outfits_screen.dart';
 
 /// The picked pieces laid out on a tinted board.
 Widget outfitBoard(ClosetModule module, {double height = 230}) =>
@@ -96,8 +97,11 @@ class _ReadyToTryScreenState extends State<ReadyToTryScreen> {
               const MirageNotice(
                 'Pick up to 3 pieces from your closet first: open a piece and tap Add to Outfit.',
               )
-            else
+            else ...[
               outfitBoard(widget.module),
+              const SizedBox(height: 10),
+              SaveOutfitButton(module: widget.module),
+            ],
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
@@ -497,9 +501,11 @@ class AiLookScreen extends StatelessWidget {
                 Navigator.of(context).popUntil((route) => route.isFirst),
           ),
           const SizedBox(height: 10),
+          SaveOutfitButton(module: module),
+          const SizedBox(height: 10),
           const Center(
             child: Text(
-              'Saving and sharing looks are coming soon.',
+              'Sharing looks is coming soon.',
               style: TextStyle(fontSize: 11, color: MirageColors.muted),
             ),
           ),
