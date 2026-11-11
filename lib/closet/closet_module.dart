@@ -30,6 +30,9 @@ class ClosetModule {
   final OutfitsController outfits;
   final OutfitTray tray;
 
+  /// Saved outfit the current try-on belongs to, so its look can be saved back to it.
+  String? activeOutfitId;
+
   void dispose() {
     closet.dispose();
     tryOn.dispose();

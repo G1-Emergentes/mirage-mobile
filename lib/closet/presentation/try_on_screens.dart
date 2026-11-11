@@ -80,7 +80,7 @@ class _ReadyToTryScreenState extends State<ReadyToTryScreen> {
               onBack: () => Navigator.of(context).pop(),
               trailing: IconButton(
                 onPressed: () =>
-                    Navigator.of(context).popUntil((route) => route.isFirst),
+                    Navigator.of(context).popUntil(isOutfitOrRoot),
                 tooltip: 'Close',
                 icon: const Icon(Icons.close, size: 22),
               ),
@@ -97,11 +97,8 @@ class _ReadyToTryScreenState extends State<ReadyToTryScreen> {
               const MirageNotice(
                 'Pick up to 3 pieces from your closet first: open a piece and tap Add to Outfit.',
               )
-            else ...[
+            else
               outfitBoard(widget.module),
-              const SizedBox(height: 10),
-              SaveOutfitButton(module: widget.module),
-            ],
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
@@ -340,7 +337,7 @@ class _CreatingLookScreenState extends State<CreatingLookScreen> {
               onBack: () => Navigator.of(context).pop(),
               trailing: IconButton(
                 onPressed: () =>
-                    Navigator.of(context).popUntil((route) => route.isFirst),
+                    Navigator.of(context).popUntil(isOutfitOrRoot),
                 tooltip: 'Close',
                 icon: const Icon(Icons.close, size: 22),
               ),
@@ -498,11 +495,10 @@ class AiLookScreen extends StatelessWidget {
             label: 'Edit Outfit',
             arrow: false,
             onPressed: () =>
-                Navigator.of(context).popUntil((route) => route.isFirst),
+                Navigator.of(context).popUntil(isOutfitOrRoot),
           ),
           const SizedBox(height: 10),
-          SaveOutfitButton(module: module),
-          const SizedBox(height: 10),
+          SaveLookButton(module: module),
           const Center(
             child: Text(
               'Sharing looks is coming soon.',
@@ -532,7 +528,7 @@ class CompareLookScreen extends StatelessWidget {
             onBack: () => Navigator.of(context).pop(),
             trailing: IconButton(
               onPressed: () =>
-                  Navigator.of(context).popUntil((route) => route.isFirst),
+                  Navigator.of(context).popUntil(isOutfitOrRoot),
               tooltip: 'Close',
               icon: const Icon(Icons.close, size: 22),
             ),
@@ -578,7 +574,7 @@ class CompareLookScreen extends StatelessWidget {
             label: 'Edit Outfit',
             arrow: false,
             onPressed: () =>
-                Navigator.of(context).popUntil((route) => route.isFirst),
+                Navigator.of(context).popUntil(isOutfitOrRoot),
           ),
         ],
       ),

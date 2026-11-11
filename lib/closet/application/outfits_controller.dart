@@ -4,6 +4,7 @@ import '../domain/outfit.dart';
 
 class OutfitsController extends ChangeNotifier {
   OutfitsController(this.repository);
+  static const maxPieces = 3;
   final OutfitRepository repository;
   List<SavedOutfit> outfits = const [];
   bool loading = false, loaded = false, _closed = false;
@@ -27,33 +28,58 @@ class OutfitsController extends ChangeNotifier {
     }
   }
 
-  /// Saves the combination. When `image` is given (a look already generated for these very
-  /// pieces) it is stored too. Saving the same pieces again does not duplicate the outfit:
-  /// it reuses the saved one and only adds or replaces its picture. If the picture fails the
-  /// combination stays saved and `hasImage` tells the caller.
-  Future<SavedOutfit> save(List<String> garmentIds, {Uint8List? image}) async {
-    final wanted = garmentIds.toSet();
-    final existing = outfits
-        .where(
-          (o) =>
-              o.garmentIds.length == wanted.length &&
-              o.garmentIds.toSet().containsAll(wanted),
-        )
-        .firstOrNull;
-    var saved = existing ?? await repository.save(garmentIds);
-    if (image != null) {
-      try {
-        saved = await repository.attachImage(saved.id, image, imageType(image));
-      } catch (_) {
-        // The combination is saved; the caller reports the missing picture.
-      }
-    }
+  SavedOutfit? byId(String id) => outfits.where((o) => o.id == id).firstOrNull;
+
+  void _put(SavedOutfit saved) {
     outfits = [
       for (final o in outfits)
         if (o.id != saved.id) o,
       saved,
-    ];
+    ]..sort((a, b) => a.id.compareTo(b.id)); // same order as the server's listing
     notifyListeners();
+  }
+
+  Future<SavedOutfit> create(OutfitDetails details, List<String> ids) async {
+    final saved = await repository.create(details, ids);
+    _put(saved);
+    return saved;
+  }
+
+  Future<SavedOutfit> update(
+    SavedOutfit outfit, {
+    OutfitDetails? details,
+    List<String>? garmentIds,
+  }) async {
+    final saved = await repository.update(
+      outfit.id,
+      details ??
+          OutfitDetails(
+            name: outfit.name,
+            occasion: outfit.occasion,
+            style: outfit.style,
+          ),
+      garmentIds ?? outfit.garmentIds,
+    );
+    _put(saved);
+    return saved;
+  }
+
+  Future<SavedOutfit> addGarment(SavedOutfit outfit, String garmentId) =>
+      update(outfit, garmentIds: [...outfit.garmentIds, garmentId]);
+
+  Future<SavedOutfit> removeGarment(SavedOutfit outfit, String garmentId) =>
+      update(
+        outfit,
+        garmentIds: [
+          for (final id in outfit.garmentIds)
+            if (id != garmentId) id,
+        ],
+      );
+
+  /// Stores the generated look as the outfit's picture.
+  Future<SavedOutfit> saveLook(String id, Uint8List image) async {
+    final saved = await repository.attachImage(id, image, imageType(image));
+    _put(saved);
     return saved;
   }
 
@@ -83,9 +109,9 @@ class OutfitsController extends ChangeNotifier {
     'GARMENT_NOT_FOUND' => 'One of the pieces no longer exists.',
     'OUTFIT_NOT_FOUND' => 'This outfit no longer exists.',
     'INVALID_ARGUMENT' =>
-      'This outfit is not valid. Use 1 to 3 available pieces.',
+      'Outfits take 1 to 3 pieces, and new pieces must be available.',
     'SERVICE_UNAVAILABLE' => 'The closet is temporarily unavailable.',
-    _ => 'Could not save the outfit. Try again.',
+    _ => 'Something went wrong. Try again.',
   };
 
   @override

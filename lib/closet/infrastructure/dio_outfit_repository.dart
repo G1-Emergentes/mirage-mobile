@@ -44,17 +44,39 @@ class DioOutfitRepository implements OutfitRepository {
     return all;
   });
 
+  Map<String, dynamic> _body(OutfitDetails d, List<String> ids) => {
+    'garment_ids': ids,
+    'name': ?d.name,
+    'occasion': ?d.occasion,
+    'style': ?d.style,
+  };
+
   @override
-  Future<SavedOutfit> save(List<String> garmentIds, {String? name}) =>
+  Future<SavedOutfit> create(OutfitDetails details, List<String> garmentIds) =>
       guardCalls(
         () async => SavedOutfit.fromJson(
           (await _dio.post<Map<String, dynamic>>(
             '/outfits',
-            data: {'garment_ids': garmentIds, 'name': ?name},
+            data: _body(details, garmentIds),
             options: await _auth(),
           )).data!,
         ),
       );
+
+  @override
+  Future<SavedOutfit> update(
+    String id,
+    OutfitDetails details,
+    List<String> garmentIds,
+  ) => guardCalls(
+    () async => SavedOutfit.fromJson(
+      (await _dio.put<Map<String, dynamic>>(
+        '/outfits/$id',
+        data: _body(details, garmentIds),
+        options: await _auth(),
+      )).data!,
+    ),
+  );
 
   @override
   Future<SavedOutfit> attachImage(
