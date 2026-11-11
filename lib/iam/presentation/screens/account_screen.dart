@@ -11,10 +11,11 @@ class AccountScreen extends StatelessWidget {
     required this.controller,
     this.bottomNavigationBar,
     this.onContinueHome,
+    this.onOpenCloset,
   });
   final IamController controller;
   final Widget? bottomNavigationBar;
-  final VoidCallback? onContinueHome;
+  final VoidCallback? onContinueHome, onOpenCloset;
   @override
   Widget build(BuildContext context) {
     final account = controller.account!;
@@ -73,16 +74,17 @@ class AccountScreen extends StatelessWidget {
             onPressed: kReleaseMode
                 ? null
                 : () async {
-                    final completed = await Navigator.of(context).push<bool>(
-                      MaterialPageRoute<bool>(
+                    // true: avatar saved. 'closet': the user kept a body photo instead.
+                    final completed = await Navigator.of(context).push<Object?>(
+                      MaterialPageRoute<Object?>(
                         builder: (_) => AvatarScreen(
                           accessToken: controller.avatarAccessToken,
                         ),
                       ),
                     );
-                    if (completed == true && context.mounted) {
-                      onContinueHome?.call();
-                    }
+                    if (!context.mounted) return;
+                    if (completed == true) onContinueHome?.call();
+                    if (completed == 'closet') onOpenCloset?.call();
                   },
           ),
           const SizedBox(height: 14),

@@ -35,7 +35,7 @@ class MirageBottomNavigation extends StatelessWidget {
   );
   Widget _item(int index) {
     final selected = selectedIndex == index;
-    final available = index == 0 || index == 4;
+    final available = index == 0 || index == 1 || index == 4;
     final color = selected ? MirageColors.pink : MirageColors.muted;
     return Semantics(
       label: labels[index],

@@ -7,6 +7,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../../shared/theme/mirage_theme.dart';
 import '../../shared/widgets/mirage_components.dart';
 import '../application/avatar_controller.dart';
+import '../application/person_photo.dart';
 import '../domain/avatar_repository.dart';
 import '../infrastructure/dio_avatar_repository.dart';
 import 'measurements_screen.dart';
@@ -26,6 +27,8 @@ class _AvatarScreenState extends State<AvatarScreen> {
   final form = GlobalKey<FormState>();
   String? photoError;
   bool consent = false, picking = false;
+  // Fallback when the saved avatar cannot be opened: a body photo for outfit previews.
+  bool previewConsent = false, photoKept = false;
   @override
   void initState() {
     super.initState();
@@ -107,7 +110,12 @@ class _AvatarScreenState extends State<AvatarScreen> {
         throw StateError('Photo too large');
       }
       final bytes = await file.readAsBytes();
-      if (mounted) setState(() => photos[slot] = bytes);
+      if (mounted) {
+        setState(() {
+          photos[slot] = bytes;
+          if (slot == 1) photoKept = false;
+        });
+      }
     } catch (_) {
       if (mounted) {
         setState(
@@ -241,6 +249,73 @@ class _AvatarScreenState extends State<AvatarScreen> {
               onPressed: controller.restore,
               arrow: false,
             ),
+            const SizedBox(height: 28),
+            const Text(
+              'Or use a photo of your body',
+              style: TextStyle(fontFamily: 'Lora', fontSize: 24, height: 1.1),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'No avatar yet? You can still preview outfits on yourself with a clear full-body photo: standing, one person in frame.',
+              style: TextStyle(fontSize: 13, color: MirageColors.muted),
+            ),
+            if (photos[1] != null) ...[
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                // contain, not cover: cover cut the head off a full-body photo.
+                child: ColoredBox(
+                  color: Colors.white,
+                  child: SizedBox(
+                    height: 320,
+                    width: double.infinity,
+                    child: Image.memory(photos[1]!, fit: BoxFit.contain),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: picking ? null : () => pick(1),
+              child: Text(
+                photos[1] == null ? 'Use a body photo instead' : 'Replace photo',
+              ),
+            ),
+            if (photoError case final String message) ...[
+              const SizedBox(height: 8),
+              MirageNotice(message, error: true),
+            ],
+            if (photos[1] != null) ...[
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: previewConsent,
+                onChanged: (v) => setState(() => previewConsent = v!),
+                title: const Text(
+                  'I agree to send this photo to an image-generation service to preview outfits. It is not stored on a server.',
+                  style: TextStyle(fontSize: 11),
+                ),
+              ),
+              MirageButton(
+                label: 'Use this photo',
+                arrow: false,
+                onPressed: previewConsent
+                    ? () {
+                        PersonPhoto.bytes = photos[1];
+                        setState(() => photoKept = true);
+                      }
+                    : null,
+              ),
+              if (photoKept) ...[
+                const SizedBox(height: 12),
+                notice('Photo saved. Next: pick up to 3 pieces in your closet and tap Try on.'),
+                const SizedBox(height: 12),
+                MirageButton(
+                  key: const ValueKey('go-closet'),
+                  label: 'Go to my closet',
+                  onPressed: () => Navigator.of(context).pop('closet'),
+                ),
+              ],
+            ],
           ] else if (controller.model != null) ...[
             const Text(
               'Your Digital Avatar',

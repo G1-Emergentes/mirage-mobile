@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miragemobile/avatar/domain/avatar_repository.dart';
 import 'package:miragemobile/avatar/application/avatar_controller.dart';
+import 'package:miragemobile/avatar/application/person_photo.dart';
 import 'package:miragemobile/avatar/presentation/avatar_screen.dart';
 import 'package:miragemobile/avatar/presentation/measurements_screen.dart';
 import 'package:miragemobile/shared/theme/mirage_theme.dart';
@@ -194,6 +195,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Try again'), findsOneWidget);
     expect(find.text('Full Body Photo'), findsNothing);
+    // Without a saved avatar the user can still give a body photo for outfit previews,
+    // but nothing is kept until a photo is chosen and consent is given.
+    expect(find.text('Or use a photo of your body'), findsOneWidget);
+    expect(find.text('Use a body photo instead'), findsOneWidget);
+    expect(find.text('Use this photo'), findsNothing);
+    expect(PersonPhoto.bytes, isNull);
     expect(tester.takeException(), isNull);
     debugDefaultTargetPlatformOverride = null;
   });
