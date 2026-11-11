@@ -30,6 +30,11 @@ android {
         versionName = flutter.versionName
     }
 
+    androidResources {
+        // MediaPipe maps the .task model directly from the APK: it must stay uncompressed.
+        noCompress += listOf("task")
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
@@ -41,4 +46,19 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// Virtual try-on of glasses (face/ module): camera, face tracking and 3D rendering on device.
+val cameraxVersion = "1.6.2"
+// 1.76+ requires compileSdk 37, which AGP 8.11 does not support yet.
+val filamentVersion = "1.75.1"
+
+dependencies {
+    implementation("androidx.camera:camera-core:$cameraxVersion")
+    implementation("androidx.camera:camera-camera2:$cameraxVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+    implementation("androidx.camera:camera-view:$cameraxVersion")
+    implementation("com.google.mediapipe:tasks-vision:0.10.35")
+    implementation("com.google.android.filament:filament-android:$filamentVersion")
+    implementation("com.google.android.filament:gltfio-android:$filamentVersion")
 }

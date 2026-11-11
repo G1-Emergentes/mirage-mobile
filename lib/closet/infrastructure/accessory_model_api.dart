@@ -7,6 +7,42 @@ import '../domain/closet_repository.dart';
 import '../domain/garment.dart';
 import 'dio_closet_repository.dart';
 
+/// One row of `GET /garments/models?ids=…`: what a card or picker needs.
+class AccessoryModelSummary {
+  const AccessoryModelSummary({
+    required this.garmentId,
+    required this.found,
+    this.status,
+    this.category,
+    this.badge,
+    this.isStale = false,
+    this.arFit,
+  });
+
+  factory AccessoryModelSummary.fromJson(Map<String, dynamic> json) =>
+      AccessoryModelSummary(
+        garmentId: json['garment_id'] as String,
+        found: json['found'] as bool? ?? false,
+        status: json['status'] as String?,
+        category: json['category'] as String?,
+        badge: json['badge'] as String?,
+        isStale: json['is_stale'] as bool? ?? false,
+        arFit: json['ar_fit'] is Map<String, dynamic>
+            ? json['ar_fit'] as Map<String, dynamic>
+            : null,
+      );
+
+  final String garmentId;
+  final bool found;
+  final String? status, category, badge;
+  final bool isStale;
+
+  /// Face placement sent by the service for AR-ready models; null until it provides one.
+  final Map<String, dynamic>? arFit;
+
+  bool get arReady => found && status == 'READY' && badge == 'AR_READY';
+}
+
 class AccessoryModelApi {
   AccessoryModelApi({required this.accessToken, Dio? dio, String? baseUrl})
     : _dio = dio ?? Dio() {
@@ -52,6 +88,47 @@ class AccessoryModelApi {
       rethrow;
     }
   }
+
+  /// Status of several garments in one call (the service accepts up to 100 ids).
+  Future<List<AccessoryModelSummary>> listModels(List<String> ids) async {
+    if (ids.isEmpty) return const [];
+    final result = <AccessoryModelSummary>[];
+    for (var start = 0; start < ids.length; start += 100) {
+      final chunk = ids.sublist(start, (start + 100).clamp(0, ids.length));
+      final items = await guardCalls(() async {
+        final response = await _dio.get<Map<String, dynamic>>(
+          '/garments/models',
+          queryParameters: {'ids': chunk.join(',')},
+          options: await _auth(),
+        );
+        return (response.data?['items'] as List? ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .map(AccessoryModelSummary.fromJson);
+      });
+      result.addAll(items);
+    }
+    return result;
+  }
+
+  /// Saves how this model sits on the face (calibrated on the phone). Returns the
+  /// `ar_fit` the service now serves for it.
+  Future<Map<String, dynamic>> saveArFit(
+    String id, {
+    required List<double> offsetM,
+    required double scale,
+    required double pitchDeg,
+  }) => guardCalls(() async {
+    final response = await _dio.put<Map<String, dynamic>>(
+      '${_path(id)}/ar-fit',
+      data: {'offset_m': offsetM, 'scale': scale, 'pitch_deg': pitchDeg},
+      options: await _auth(),
+    );
+    final fit = response.data?['ar_fit'];
+    if (fit is! Map<String, dynamic>) {
+      throw const ClosetException('INVALID_AR_FIT');
+    }
+    return fit;
+  });
 
   Future<void> generate(
     Garment garment, {

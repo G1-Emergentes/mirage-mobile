@@ -16,6 +16,7 @@ class HomeScreen extends StatelessWidget {
     required this.onExplore,
     this.displayName,
     this.onRecommendations,
+    this.onTryOnGlasses,
   });
 
   final Widget navigation;
@@ -23,6 +24,9 @@ class HomeScreen extends StatelessWidget {
   final String? displayName;
   final VoidCallback onCloset, onExplore;
   final VoidCallback? onRecommendations;
+
+  /// Opens the virtual try-on of glasses (AR on the face).
+  final VoidCallback? onTryOnGlasses;
   final ValueChanged<ClosetGroup> onCategory;
 
   @override
@@ -128,10 +132,48 @@ class HomeScreen extends StatelessWidget {
         style: Theme.of(context).textTheme.titleMedium,
       ),
       const SizedBox(height: 8),
-      const MirageNotice(
-        'No AR-ready pieces available yet.',
-        color: mirageNeutral,
-      ),
+      if (onTryOnGlasses case final open?)
+        Material(
+          color: MirageColors.lavender,
+          borderRadius: BorderRadius.circular(22),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            key: const ValueKey('home-try-on-glasses'),
+            onTap: open,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  const Icon(Icons.face_retouching_natural, size: 34),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const MirageBadge('AR TRY-ON'),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Try on glasses',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const Text(
+                          'See them on your face with the front camera.',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const MirageDesignIcon('arrow-up-right', size: 20),
+                ],
+              ),
+            ),
+          ),
+        )
+      else
+        const MirageNotice(
+          'No AR-ready pieces available yet.',
+          color: mirageNeutral,
+        ),
       const SizedBox(height: 10),
       _section(context, 'Discover for You', 'Explore', onExplore),
       const MirageNotice('Explore new finds and more ways to wear.'),

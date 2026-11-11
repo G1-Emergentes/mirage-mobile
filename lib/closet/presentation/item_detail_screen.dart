@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../face_try_on/presentation/glasses_try_on_screen.dart';
 import '../../shared/theme/mirage_theme.dart';
 import '../../shared/widgets/mirage_components.dart';
 import '../application/closet_controller.dart';
@@ -209,6 +210,22 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     builder: (_) => Accessory3dScreen(
                       garment: garment,
                       api: widget.module.accessoryModels,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            if (garment.model3dCategory == 'glasses') ...[
+              OutlinedButton.icon(
+                key: const ValueKey('try-on-glasses'),
+                icon: const Icon(Icons.face_retouching_natural),
+                label: const Text('Try on (AR)'),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => GlassesTryOnScreen.forCloset(
+                      widget.module,
+                      initialGarmentId: garment.id,
                     ),
                   ),
                 ),

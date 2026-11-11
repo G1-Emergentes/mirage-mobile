@@ -8,6 +8,7 @@ import '../closet/presentation/category_screen.dart';
 import '../closet/presentation/closet_screen.dart';
 import '../closet/presentation/try_on_screens.dart';
 import '../explore/presentation/screens/explore_screen.dart';
+import '../face_try_on/presentation/glasses_try_on_screen.dart';
 import '../home/presentation/screens/home_screen.dart';
 import '../iam/application/iam_controller.dart';
 import '../iam/presentation/screens/account_screen.dart';
@@ -91,6 +92,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
           onCategory: _openCategory,
           onExplore: () => _navigate(3),
           onRecommendations: () => _open(const RecommendationsScreen()),
+          onTryOnGlasses: () => _open(GlassesTryOnScreen.forCloset(closet)),
         ),
       ),
     };

@@ -101,6 +101,7 @@ flutter:
     - assets/navigation/
     - assets/avatar/
     - assets/iam/
+    - assets/try_on/
   fonts:
     - family: Lora
       fonts:
