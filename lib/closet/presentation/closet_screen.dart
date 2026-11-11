@@ -6,6 +6,7 @@ import '../domain/garment.dart';
 import 'add_item_screen.dart';
 import 'category_screen.dart';
 import 'closet_widgets.dart';
+import 'saved_outfits_screen.dart';
 import 'try_on_screens.dart';
 
 /// "My Closet": the four groups with their counts. Root of the Closet tab.
@@ -187,6 +188,13 @@ class _ClosetScreenState extends State<ClosetScreen> {
               for (final group in groups) _groupCard(group),
             ],
             _trayBar(),
+            OutlinedButton(
+              key: const ValueKey('saved-outfits'),
+              onPressed: () => _open(SavedOutfitsScreen(module: widget.module)),
+              style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+              child: const Text('Saved Outfits'),
+            ),
+            const SizedBox(height: 10),
             MirageButton(
               key: const ValueKey('add-item'),
               label: '+ Add New Item',

@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import '../../shared/theme/mirage_theme.dart';
 import '../../shared/widgets/mirage_components.dart';
 import '../application/closet_controller.dart';
-import '../application/outfit_tray.dart';
 import '../closet_module.dart';
 import '../domain/closet_repository.dart';
 import '../domain/garment.dart';
 import 'add_item_screen.dart';
 import 'closet_widgets.dart';
+import 'saved_outfits_screen.dart';
 
-/// One piece: photo, details, "Add to Outfit", edit and delete.
+/// One piece: photo, details, "Armar" (put it in an outfit), edit and delete.
 class ItemDetailScreen extends StatefulWidget {
   const ItemDetailScreen({
     super.key,
@@ -62,27 +62,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     }
   }
 
-  void _toggle(Garment garment, OutfitTray tray) {
-    final wasIn = tray.contains(garment.id);
-    if (!tray.toggle(garment)) {
-      setState(
-        () => error = !garment.available
-            ? 'This piece is not available right now.'
-            : !garment.hasImage
-            ? 'Add a photo to this piece to use it in a look.'
-            : 'Your outfit is full. Remove a piece first.',
-      );
-      return;
-    }
-    setState(() => error = null);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(wasIn ? 'Removed from outfit' : 'Added to outfit'),
-        duration: const Duration(seconds: 1),
-      ),
-    );
-  }
-
   Widget _row(String label, String value) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 7),
     child: Row(
@@ -105,10 +84,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: Listenable.merge([widget.module.closet, widget.module.tray]),
+    listenable: widget.module.closet,
     builder: (context, _) {
       final closet = widget.module.closet;
-      final tray = widget.module.tray;
       final garment = closet.garments
           .where((g) => g.id == widget.garmentId)
           .firstOrNull;
@@ -117,7 +95,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           child: Center(child: CircularProgressIndicator()),
         );
       }
-      final inTray = tray.contains(garment.id);
       return MirageScreen(
         topPadding: 0,
         child: Column(
@@ -189,18 +166,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               MirageNotice(error!, error: true),
               const SizedBox(height: 12),
             ],
-            inTray
-                ? OutlinedButton(
-                    key: const ValueKey('toggle-outfit'),
-                    onPressed: () => _toggle(garment, tray),
-                    child: const Text('Remove from Outfit'),
-                  )
-                : MirageButton(
-                    key: const ValueKey('toggle-outfit'),
-                    label: '+ Add to Outfit',
-                    arrow: false,
-                    onPressed: () => _toggle(garment, tray),
-                  ),
+            MirageButton(
+              key: const ValueKey('armar'),
+              label: 'Armar',
+              arrow: false,
+              onPressed: () => showArmarSheet(context, widget.module, garment),
+            ),
             const SizedBox(height: 10),
             OutlinedButton(
               key: const ValueKey('edit-item'),
