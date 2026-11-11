@@ -224,8 +224,16 @@ class _MirageFieldState extends State<MirageField> {
 }
 
 class MirageNotice extends StatelessWidget {
-  const MirageNotice(this.message, {super.key, this.error = false});
+  const MirageNotice(
+    this.message, {
+    super.key,
+    this.error = false,
+    this.color,
+    this.leading,
+  });
   final String message;
+  final Color? color;
+  final Widget? leading;
   final bool error;
   @override
   Widget build(BuildContext context) => Semantics(
@@ -234,16 +242,23 @@ class MirageNotice extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: error ? const Color(0xFFFCE3EC) : MirageColors.blue,
+        color: error ? const Color(0xFFFCE3EC) : color ?? MirageColors.blue,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: Text(
-        message,
-        style: TextStyle(
-          fontSize: 13,
-          height: 1.5,
-          color: error ? const Color(0xFF8B1946) : MirageColors.ink,
-        ),
+      child: Row(
+        children: [
+          if (leading != null) ...[leading!, const SizedBox(width: 10)],
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.5,
+                color: error ? const Color(0xFF8B1946) : MirageColors.ink,
+              ),
+            ),
+          ),
+        ],
       ),
     ),
   );

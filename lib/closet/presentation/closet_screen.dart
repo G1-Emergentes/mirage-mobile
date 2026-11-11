@@ -33,11 +33,16 @@ class _ClosetScreenState extends State<ClosetScreen> {
   @override
   void initState() {
     super.initState();
-    if (!widget.module.closet.loaded) widget.module.closet.load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !widget.module.closet.loaded) {
+        widget.module.closet.load();
+      }
+    });
   }
 
-  void _open(Widget screen) =>
-      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
+  void _open(Widget screen) => Navigator.of(
+    context,
+  ).push(MaterialPageRoute<void>(builder: (_) => screen));
 
   Widget _groupCard(ClosetGroup group) {
     final closet = widget.module.closet;

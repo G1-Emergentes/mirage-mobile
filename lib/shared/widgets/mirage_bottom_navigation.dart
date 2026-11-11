@@ -35,19 +35,18 @@ class MirageBottomNavigation extends StatelessWidget {
   );
   Widget _item(int index) {
     final selected = selectedIndex == index;
-    final available = index == 0 || index == 1 || index == 4;
     final color = selected ? MirageColors.pink : MirageColors.muted;
     return Semantics(
       label: labels[index],
       button: true,
       selected: selected,
-      enabled: available,
+      enabled: true,
       child: ExcludeSemantics(
         child: Tooltip(
-          message: available ? labels[index] : '${labels[index]} · Coming soon',
+          message: labels[index],
           child: InkWell(
             key: ValueKey('navigation-$index'),
-            onTap: available ? () => onSelected(index) : null,
+            onTap: () => onSelected(index),
             borderRadius: BorderRadius.circular(14),
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 57),

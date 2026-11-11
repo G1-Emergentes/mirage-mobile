@@ -1,8 +1,8 @@
-# Mirage Mobile — IAM
+# Mirage Mobile
 
 Esta primera entrega limita las pantallas al acceso a la cuenta: splash, tres
 introducciones, login, registro, confirmación de correo, solicitud de recuperación
-y resumen de cuenta autenticada. No construye Home, Closet, outfits ni el avatar.
+y resumen de cuenta autenticada. Las pantallas incorporadas después se describen en la sección de Mirage y el API Gateway.
 
 ```text
 lib/
@@ -70,6 +70,17 @@ de plataforma y su integración SDK. Apple no está implementado en el backend.
 
 Los correos actuales abren las páginas de confirmación/recuperación del servidor.
 Esta entrega no añade deep links móviles ni cambia las URLs de Supabase.
+
+## Pantallas de Mirage y preparación para el API Gateway
+
+Home, Closet, Create, Explore y Profile se abren desde la barra inferior. Home (W06), Create (W14), las recomendaciones (W07) y Explore (W28) conservan los componentes y recursos locales de Figma. Closet, los detalles y el formulario de prendas, y la prueba de looks usan el módulo integrado de Digital Closet.
+
+- Home y Create leen las prendas del mismo `ClosetModule` que usa Closet. Las categorías abren la búsqueda y selección de ese módulo.
+- Create muestra la bandeja compartida. El límite de tres prendas lo define `OutfitTray`. **Try on Me** abre **Ready to Try**, donde se elige la foto y se solicita consentimiento antes de generar.
+- Explore y las recomendaciones siguen preparados para recibir datos del futuro API Gateway. Sus listas muestran estados vacíos mientras faltan los contratos de catálogo y ranking.
+- El módulo conectado y sus opciones locales se describen en [Closet](lib/closet/README.md). Para una prueba completa usa IAM en `:8080`, Digital Closet en `:8081` y el worker de vistas previas en `:8082`.
+
+[Mockups en Figma](https://www.figma.com/design/91cHpDWFyA9XmEFbw0Y5vN/Untitled?node-id=0-1)
 
 ## Verificar
 

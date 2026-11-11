@@ -131,7 +131,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 padding: EdgeInsets.symmetric(vertical: 60),
                 child: Center(child: CircularProgressIndicator()),
               )
-            else if (shown.isEmpty)
+            else if (!closet.loaded && closet.error != null) ...[
+              MirageNotice(closet.error!, error: true),
+              TextButton(
+                onPressed: closet.load,
+                child: const Text('Try again'),
+              ),
+            ] else if (shown.isEmpty)
               MirageNotice(
                 inGroup.isEmpty
                     ? 'No $label yet. Tap + to add one.'
