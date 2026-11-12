@@ -10,6 +10,21 @@ class OutfitTray extends ChangeNotifier {
   bool get isEmpty => _items.isEmpty;
   bool contains(String id) => _items.any((garment) => garment.id == id);
 
+  /// Validate the whole selection before replacing the current draft.
+  bool replace(List<Garment> garments) {
+    if (garments.isEmpty ||
+        garments.length > maxPieces ||
+        garments.map((g) => g.id).toSet().length != garments.length ||
+        garments.any((g) => !g.available || !g.hasImage)) {
+      return false;
+    }
+    _items
+      ..clear()
+      ..addAll(garments);
+    notifyListeners();
+    return true;
+  }
+
   /// Adds or removes the piece. Returns false when it could not be added: the tray is
   /// full, or the piece is not available.
   bool toggle(Garment garment) {

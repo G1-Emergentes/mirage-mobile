@@ -70,7 +70,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.getTopLeft(find.byType(MirageBottomNavigation)), position);
       await capture('profile-navigation');
-      await tester.tap(find.byKey(const ValueKey('navigation-2')));
+      await tester.tap(find.byKey(const ValueKey('navigation-3')));
       await tester.pumpAndSettle();
       expect(find.text('Your profile.'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('navigation-0')));

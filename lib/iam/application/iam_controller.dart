@@ -25,12 +25,17 @@ class IamController extends ChangeNotifier {
   Account? get account => _account;
   bool get signedIn => _session != null;
 
-  Future<String> avatarAccessToken() async {
+  Future<String>? _tokenRequest;
+
+  // Image tiles and chat can request authentication together; refresh only once.
+  Future<String> avatarAccessToken() =>
+      _tokenRequest ??= Future<String>.microtask(
+        _validatedAccessToken,
+      ).whenComplete(() => _tokenRequest = null);
+
+  Future<String> _validatedAccessToken() async {
     if (!await queryCurrentAccount() || _session == null) {
-      throw const AuthFailure(
-        'unauthorized',
-        'Sign in again to save your avatar.',
-      );
+      throw const AuthFailure('unauthorized', 'Sign in again to continue.');
     }
     return _session!.accessToken;
   }
@@ -132,7 +137,11 @@ class IamController extends ChangeNotifier {
   Future<bool> resendVerification(String email) =>
       _run(() => _repository.resendVerification(EmailAddress(email)));
 
-  Future<bool> queryCurrentAccount() => _run(() async {
+  Future<bool>? _accountRequest;
+  Future<bool> queryCurrentAccount() => _accountRequest ??=
+      _queryCurrentAccount().whenComplete(() => _accountRequest = null);
+
+  Future<bool> _queryCurrentAccount() => _run(() async {
     var session = _session;
     if (session == null) return;
     try {
