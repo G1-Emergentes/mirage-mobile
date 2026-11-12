@@ -6,7 +6,9 @@ teléfono; las imágenes de la cámara no salen del dispositivo. Solo Android en
 No incluye ropa ni detección de cuerpo completo.
 
 Entradas: tarjeta **Try on glasses** en Home y botón **Try on (AR)** en el detalle de
-un accesorio de lentes (`GLASSES`, `EYEGLASSES`, `SUNGLASSES`).
+un accesorio de lentes (`GLASSES`, `EYEGLASSES`, `SUNGLASSES`). Si ese accesorio todavía
+no tiene modelo AR_READY, el aviso ofrece **Create 3D model**: abre el visor 3D, que lo
+genera, y al volver se recarga el catálogo.
 
 ## Arquitectura
 
@@ -32,7 +34,7 @@ Flujo por frame: CameraX → bitmap recortado a lo que muestra la vista previa �
 MediaPipe (matriz de transformación facial, en cm) → suavizado → Filament coloca el GLB:
 
 ```
-modelo = poseFacial · T(landmark 168 + offset) · Rx(inclinación) · S(100 · escala)
+modelo = poseFacial · T(landmark 6 + offset) · Rx(inclinación) · S(100 · escala)
 ```
 
 La cámara de Filament usa el FOV vertical de 63° de MediaPipe, así que la matriz se
@@ -42,12 +44,26 @@ y la capa 3D (`scaleX = -1`) se espejan igual, como un selfie.
 ## Contrato del modelo GLB
 
 Lo produce virtual-try-on-service (`postprocess.py`): glTF binario, metros, Y arriba,
-frente hacia +Z, 14 cm de ancho y origen en el puente nasal (plano frontal). Las
-patillas vienen recortadas. `GlassesFit` es el ajuste fino por modelo:
+frente hacia +Z, 14 cm de ancho y origen en el centro del puente **a la altura del
+centro de los cristales** (plano frontal). La app lleva ese origen al **landmark 6** de
+MediaPipe (puente nasal, donde apoyan los lentes). El landmark 168 está entre las cejas:
+anclar ahí dejaba los cristales ~8 mm por encima de los ojos.
+
+El probador usa la **variante sin patillas** (`GET /garments/{id}/model?variant=ar`): en
+la cara quedarían detrás de la cabeza y se verían flotando. El visor 3D usa el modelo
+completo. Las dos variantes tienen el mismo origen y tamaño. Los lentes generados antes
+de la variante reciben el completo (regenerarlos la crea).
+
+`GlassesFit` es el ajuste fino por modelo. Por defecto (calculado con el modelo canónico
+de MediaPipe: landmark 6 en y = 2.47 cm, centro de los ojos en y = 2.62 cm):
 
 ```json
-{"anchor": "nose_bridge", "offset_m": [0, 0.003, 0.006], "scale": 1.0, "pitch_deg": 0}
+{"anchor": "nose_bridge", "offset_m": [0, 0.0015, 0.002], "scale": 1.0, "pitch_deg": 0}
 ```
+
++1.5 mm deja los cristales a la altura de los ojos y +2 mm, el frente ~12 mm delante de
+la córnea. La escala viene de la pose de MediaPipe (que se adapta a la cara): 14 cm es
+~90 % de la distancia entre sienes del modelo canónico.
 
 `ClosetGlassesCatalog` lee el campo `ar_fit` de `GET /garments/models?ids=…`: el
 ajuste calibrado del modelo o, si no tiene, el por defecto de la categoría
@@ -63,7 +79,8 @@ funcionando con ellos.
 
 ## Calibración (debug)
 
-El botón de ajustes de la pantalla muestra los FPS, los landmarks 168/33/263 sobre la
+El botón de ajustes de la pantalla muestra los FPS, los landmarks 6 (ancla), 33/263
+(esquinas de los ojos) y 159/386 (párpados superiores) sobre la
 cámara y controles para subir, adelantar, escalar e inclinar los lentes. Con un
 accesorio del armario, **Save fit for this model** envía
 `PUT /garments/{id}/model/ar-fit` y desde entonces el servicio devuelve ese ajuste

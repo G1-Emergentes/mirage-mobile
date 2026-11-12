@@ -26,6 +26,10 @@ class GlassesTryOnController extends ChangeNotifier {
   GlassesOption? selected;
   GlassesFit? fit;
   bool loadingCatalog = false, loadingModel = false, faceVisible = false;
+
+  /// The accessory opened from its detail ([initialGarmentId]) has no AR-ready model:
+  /// the screen offers to create it.
+  bool missingModel = false;
   bool capturing = false, saving = false, saved = false, debug = false;
   double fps = 0;
   String? error, notice;
@@ -54,6 +58,14 @@ class GlassesTryOnController extends ChangeNotifier {
 
   Future<void> openSettings() => engine.openSettings();
 
+  /// Loads the catalog again, e.g. after creating the missing 3D model.
+  Future<void> reload() {
+    notice = null;
+    error = null;
+    missingModel = false;
+    return _loadCatalog();
+  }
+
   Future<void> _loadCatalog() async {
     loadingCatalog = true;
     _notify();
@@ -63,7 +75,8 @@ class GlassesTryOnController extends ChangeNotifier {
       final match = initial == null
           ? null
           : options.where((o) => o.garmentId == initial).firstOrNull;
-      if (initial != null && match == null) {
+      missingModel = initial != null && match == null;
+      if (missingModel) {
         notice = options.isEmpty
             ? 'This accessory has no AR-ready 3D model yet.'
             : 'This accessory has no AR-ready 3D model yet. '
@@ -181,6 +194,7 @@ class GlassesTryOnController extends ChangeNotifier {
   void dismissNotice() {
     notice = null;
     error = null;
+    missingModel = false;
     _notify();
   }
 

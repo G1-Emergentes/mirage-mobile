@@ -51,6 +51,10 @@ class _ClosetScreenState extends State<ClosetScreen> {
         .where((garment) => garment.hasImage)
         .take(2)
         .toList();
+    // Accessories with a ready 3D model show its background-free thumbnail.
+    widget.module.models3d.ensure(
+      samples.where((g) => g.model3dCategory != null).map((g) => g.id),
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -92,7 +96,11 @@ class _ClosetScreenState extends State<ClosetScreen> {
               for (final garment in samples)
                 SizedBox(
                   width: 76,
-                  child: GarmentImage(garment: garment, closet: closet),
+                  child: GarmentImage(
+                    garment: garment,
+                    closet: closet,
+                    models: widget.module.models3d,
+                  ),
                 ),
             ],
           ),

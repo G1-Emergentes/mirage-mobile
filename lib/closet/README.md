@@ -45,8 +45,20 @@ flutter test --no-pub test/closet_logic_test.dart test/closet_screens_test.dart
 
 En **Closet → Add Item**, agrega una foto, elige **Accessory** y selecciona
 **Glasses**, **Sunglasses**, **Cap** o **Hat**. En el detalle del accesorio,
-abre **View in 3D** y toca **Create 3D model**. El visor permite girar y ampliar
-el modelo. Si cambias la foto en **Edit Item**, la app te permite actualizarlo.
+abre **View in 3D**: si no tiene modelo, se genera solo (2-3 min en la GPU; mientras el
+servicio lo marca PROCESSING la pantalla consulta cada 5 s). El visor permite girar y
+ampliar el modelo. Si cambias la foto en **Edit Item**, la app te permite actualizarlo.
+
+Con el modelo listo:
+- La lista **Accessories** muestra la etiqueta (`AR_READY` → **AR READY**, `MODEL_3D` →
+  **3D**) y, con el modelo listo, la miniatura sin fondo (si falla, la foto real). Sale
+  de una sola llamada `GET /garments/models?ids=…` para toda la lista. Las tarjetas de
+  **My Closet** usan la misma miniatura.
+- El detalle muestra en la cabecera el visor 3D interactivo y la etiqueta.
+
+El estado 3D lo comparten las pantallas en `application/accessory_models_controller.dart`
+(`ClosetModule.models3d`): caché por prenda, miniaturas y modelo descargados una vez, y
+`refresh(id)` tras regenerar. Si el servicio 3D falla, las pantallas siguen con la foto.
 
 La foto se sube primero a Digital Closet. Virtual Try-On recupera la foto
 asociada al accesorio y entrega el GLB autenticado en

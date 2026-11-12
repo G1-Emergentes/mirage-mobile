@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:model_viewer_plus/model_viewer_plus.dart';
 
 import '../../face_try_on/presentation/glasses_try_on_screen.dart';
 import '../../shared/theme/mirage_theme.dart';
 import '../../shared/widgets/mirage_components.dart';
+import '../application/accessory_models_controller.dart';
 import '../application/closet_controller.dart';
 import '../application/outfit_tray.dart';
 import '../closet_module.dart';
@@ -13,6 +15,9 @@ import 'accessory_3d_screen.dart';
 import 'closet_widgets.dart';
 
 /// One piece: photo, details, "Add to Outfit", edit and delete.
+///
+/// Accessories with a ready 3D model show the interactive viewer and their badge in
+/// the header; "View in 3D" creates the model when there is none.
 class ItemDetailScreen extends StatefulWidget {
   const ItemDetailScreen({
     super.key,
@@ -108,10 +113,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: Listenable.merge([widget.module.closet, widget.module.tray]),
+    listenable: Listenable.merge([
+      widget.module.closet,
+      widget.module.tray,
+      widget.module.models3d,
+    ]),
     builder: (context, _) {
       final closet = widget.module.closet;
       final tray = widget.module.tray;
+      final models = widget.module.models3d;
       final garment = closet.garments
           .where((g) => g.id == widget.garmentId)
           .firstOrNull;
@@ -120,6 +130,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           child: Center(child: CircularProgressIndicator()),
         );
       }
+      if (garment.model3dCategory != null) models.ensure([garment.id]);
+      final model = models.summary(garment.id);
       final inTray = tray.contains(garment.id);
       return MirageScreen(
         topPadding: 0,
@@ -158,7 +170,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     color: MirageColors.blue,
                     borderRadius: BorderRadius.circular(28),
                   ),
-                  child: GarmentImage(garment: garment, closet: closet),
+                  child: model != null && model.ready
+                      ? _ModelHeader(
+                          key: ValueKey('model-header-${garment.id}'),
+                          garment: garment,
+                          closet: closet,
+                          models: models,
+                        )
+                      : GarmentImage(garment: garment, closet: closet),
                 ),
                 Positioned(
                   top: 14,
@@ -167,6 +186,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     garment.available ? 'IN YOUR CLOSET' : 'UNAVAILABLE',
                   ),
                 ),
+                if (model?.badgeLabel case final badge?)
+                  Positioned(top: 14, right: 14, child: ModelBadgeTag(badge)),
               ],
             ),
             const SizedBox(height: 18),
@@ -210,6 +231,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     builder: (_) => Accessory3dScreen(
                       garment: garment,
                       api: widget.module.accessoryModels,
+                      models: models,
                     ),
                   ),
                 ),
@@ -270,5 +292,52 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         ),
       );
     },
+  );
+}
+
+/// Header of an accessory with a ready 3D model: the interactive viewer (full model),
+/// with the background-free thumbnail while the GLB downloads. If the download fails
+/// the thumbnail (or the photo) stays.
+class _ModelHeader extends StatefulWidget {
+  const _ModelHeader({
+    super.key,
+    required this.garment,
+    required this.closet,
+    required this.models,
+  });
+  final Garment garment;
+  final ClosetController closet;
+  final AccessoryModelsController models;
+
+  @override
+  State<_ModelHeader> createState() => _ModelHeaderState();
+}
+
+class _ModelHeaderState extends State<_ModelHeader> {
+  // The data URI of a ~1 MB model is built once, not on every rebuild.
+  late final Future<String> _src = widget.models
+      .model(widget.garment.id)
+      .then(
+        (bytes) =>
+            Uri.dataFromBytes(bytes, mimeType: 'model/gltf-binary').toString(),
+      );
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<String>(
+    future: _src,
+    builder: (context, snapshot) => snapshot.data == null
+        ? GarmentImage(
+            garment: widget.garment,
+            closet: widget.closet,
+            models: widget.models,
+          )
+        : ModelViewer(
+            key: const ValueKey('detail-model-viewer'),
+            src: snapshot.data!,
+            alt: '3D model of ${widget.garment.name}',
+            backgroundColor: MirageColors.blue,
+            cameraControls: true,
+            ar: false,
+          ),
   );
 }

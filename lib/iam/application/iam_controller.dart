@@ -25,8 +25,17 @@ class IamController extends ChangeNotifier {
   Account? get account => _account;
   bool get signedIn => _session != null;
 
+  // One account check shared by every request that needs the token at the same time.
+  // queryCurrentAccount() runs through _run(), which refuses a second call while one
+  // is busy: without this, only one of several concurrent requests (the photos of a
+  // closet screen, the 3D badges...) got a token and the rest failed as unauthorized.
+  Future<bool>? _accountCheck;
+
   Future<String> avatarAccessToken() async {
-    if (!await queryCurrentAccount() || _session == null) {
+    final check = _accountCheck ??= queryCurrentAccount().whenComplete(
+      () => _accountCheck = null,
+    );
+    if (!await check || _session == null) {
       throw const AuthFailure(
         'unauthorized',
         'Sign in again to save your avatar.',

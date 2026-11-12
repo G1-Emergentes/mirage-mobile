@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../shared/theme/mirage_theme.dart';
 import '../../shared/widgets/mirage_components.dart';
+import '../application/accessory_models_controller.dart';
 import '../application/closet_controller.dart';
 import '../application/outfit_tray.dart';
 import '../domain/closet_repository.dart';
@@ -80,35 +81,70 @@ class ClosetChips extends StatelessWidget {
 }
 
 /// The garment photo, fetched through a short-lived signed link.
+///
+/// With [models], an accessory whose 3D model has a thumbnail shows that PNG instead
+/// (background removed, drawn over the card colour). Without one, or if it fails to
+/// load, the original photo is shown.
 class GarmentImage extends StatelessWidget {
   const GarmentImage({
     super.key,
     required this.garment,
     required this.closet,
     this.fit = BoxFit.contain,
+    this.models,
   });
   final Garment garment;
   final ClosetController closet;
   final BoxFit fit;
+  final AccessoryModelsController? models;
 
   Widget get _placeholder => const Center(
     child: Icon(Icons.checkroom_outlined, color: MirageColors.muted, size: 32),
   );
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<String?>(
+  Widget build(BuildContext context) {
+    final models = this.models;
+    if (models == null || garment.model3dCategory == null) return _photo();
+    return ListenableBuilder(
+      listenable: models,
+      builder: (context, _) {
+        final thumbnail = models.thumbnail(garment.id);
+        if (thumbnail == null) return _photo();
+        return FutureBuilder<Uint8List?>(
+          future: thumbnail,
+          builder: (context, snapshot) {
+            final bytes = snapshot.data;
+            if (snapshot.connectionState != ConnectionState.done) {
+              return _spinner;
+            }
+            if (bytes == null) return _photo();
+            return Image.memory(
+              bytes,
+              key: const ValueKey('garment-thumbnail'),
+              fit: fit,
+              gaplessPlayback: true,
+              errorBuilder: (_, _, _) => _photo(),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  static const _spinner = Center(
+    child: SizedBox(
+      width: 22,
+      height: 22,
+      child: CircularProgressIndicator(strokeWidth: 2),
+    ),
+  );
+
+  Widget _photo() => FutureBuilder<String?>(
     future: closet.imageUrl(garment),
     builder: (context, snapshot) {
       final url = snapshot.data;
-      if (snapshot.connectionState != ConnectionState.done) {
-        return const Center(
-          child: SizedBox(
-            width: 22,
-            height: 22,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        );
-      }
+      if (snapshot.connectionState != ConnectionState.done) return _spinner;
       if (url == null) return _placeholder;
       return Image.network(
         url,
@@ -120,6 +156,9 @@ class GarmentImage extends StatelessWidget {
 }
 
 /// A garment card of the category grid. Tapping the check selects it for the outfit.
+///
+/// With [models], accessories show their 3D badge ("AR READY" or "3D") and, when the
+/// model is ready, its background-free thumbnail (the photo if it cannot be loaded).
 class GarmentTile extends StatelessWidget {
   const GarmentTile({
     super.key,
@@ -128,17 +167,20 @@ class GarmentTile extends StatelessWidget {
     required this.tray,
     required this.tint,
     required this.onTap,
+    this.models,
   });
   final Garment garment;
   final ClosetController closet;
   final OutfitTray tray;
   final Color tint;
   final VoidCallback onTap;
+  final AccessoryModelsController? models;
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: tray,
+    listenable: Listenable.merge([tray, ?models]),
     builder: (context, _) {
       final picked = tray.contains(garment.id);
+      final badge = models?.summary(garment.id)?.badgeLabel;
       return InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
@@ -160,9 +202,19 @@ class GarmentTile extends StatelessWidget {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(12),
-                      child: GarmentImage(garment: garment, closet: closet),
+                      child: GarmentImage(
+                        garment: garment,
+                        closet: closet,
+                        models: models,
+                      ),
                     ),
                   ),
+                  if (badge != null)
+                    Positioned(
+                      top: garment.available ? 8 : 34,
+                      left: 8,
+                      child: ModelBadgeTag(badge),
+                    ),
                   if (picked)
                     const Positioned(
                       top: 8,
@@ -174,7 +226,11 @@ class GarmentTile extends StatelessWidget {
                       ),
                     ),
                   if (!garment.available)
-                    const Positioned(top: 8, left: 8, child: Tag('Unavailable')),
+                    const Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Tag('Unavailable'),
+                    ),
                 ],
               ),
             ),
@@ -213,6 +269,18 @@ class Tag extends StatelessWidget {
       text,
       style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700),
     ),
+  );
+}
+
+/// 3D label of an accessory: "AR READY" (try it on) in lime, "3D" (viewer only) in white.
+class ModelBadgeTag extends StatelessWidget {
+  const ModelBadgeTag(this.label, {super.key});
+  final String label;
+  @override
+  Widget build(BuildContext context) => Tag(
+    label,
+    key: ValueKey('badge-$label'),
+    color: label == 'AR READY' ? MirageColors.lime : Colors.white,
   );
 }
 

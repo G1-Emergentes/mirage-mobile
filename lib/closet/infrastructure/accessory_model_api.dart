@@ -17,6 +17,8 @@ class AccessoryModelSummary {
     this.badge,
     this.isStale = false,
     this.arFit,
+    this.thumbnailUrl,
+    this.arModelUrl,
   });
 
   factory AccessoryModelSummary.fromJson(Map<String, dynamic> json) =>
@@ -30,6 +32,8 @@ class AccessoryModelSummary {
         arFit: json['ar_fit'] is Map<String, dynamic>
             ? json['ar_fit'] as Map<String, dynamic>
             : null,
+        thumbnailUrl: json['thumbnail_url'] as String?,
+        arModelUrl: json['ar_model_url'] as String?,
       );
 
   final String garmentId;
@@ -40,7 +44,31 @@ class AccessoryModelSummary {
   /// Face placement sent by the service for AR-ready models; null until it provides one.
   final Map<String, dynamic>? arFit;
 
-  bool get arReady => found && status == 'READY' && badge == 'AR_READY';
+  /// Service path of the background-free PNG (needs the bearer token), or null.
+  final String? thumbnailUrl;
+
+  /// Service path of the temple-less GLB for the AR try-on; null on models generated
+  /// before the service had that variant (the full model is used instead).
+  final String? arModelUrl;
+
+  bool get ready => found && status == 'READY';
+  bool get arReady => ready && badge == 'AR_READY';
+
+  /// Card label: AR_READY → "AR READY", MODEL_3D → "3D", no model → null.
+  String? get badgeLabel => switch (badge) {
+    'AR_READY' => 'AR READY',
+    'MODEL_3D' => '3D',
+    _ => null,
+  };
+}
+
+/// Variants of a garment's GLB served by the 3D service.
+enum ModelVariant {
+  /// Complete model, with temples: the 3D viewer.
+  full,
+
+  /// Cut at the hinges: the AR try-on (temples would float behind the head).
+  ar,
 }
 
 class AccessoryModelApi {
@@ -168,10 +196,16 @@ class AccessoryModelApi {
     );
   });
 
-  Future<Uint8List> download(String id) => guardCalls(() async {
+  /// The GLB of [variant]. For [ModelVariant.ar] the service falls back to the full
+  /// model when it has no temple-less variant yet.
+  Future<Uint8List> download(
+    String id, {
+    ModelVariant variant = ModelVariant.full,
+  }) => guardCalls(() async {
     try {
       final response = await _dio.get<Uint8List>(
         _path(id),
+        queryParameters: variant == ModelVariant.ar ? {'variant': 'ar'} : null,
         options: await _auth(responseType: ResponseType.bytes),
       );
       final bytes = response.data;
@@ -198,6 +232,25 @@ class AccessoryModelApi {
       rethrow;
     }
   });
+
+  /// PNG bytes of a summary's [AccessoryModelSummary.thumbnailUrl] (a service path,
+  /// resolved against the service origin). Null when it cannot be loaded: the
+  /// thumbnail is optional and callers show the original photo instead.
+  Future<Uint8List?> thumbnail(String thumbnailUrl) async {
+    try {
+      return await guardCalls(() async {
+        final response = await _dio.get<Uint8List>(
+          Uri.parse(_dio.options.baseUrl).resolve(thumbnailUrl).toString(),
+          options: await _auth(responseType: ResponseType.bytes),
+        );
+        final bytes = response.data;
+        return bytes == null || bytes.isEmpty ? null : bytes;
+      });
+    } catch (_) {
+      // Any failure (network, HTTP, or no token) falls back to the photo.
+      return null;
+    }
+  }
 
   void close() => _dio.close(force: true);
 }

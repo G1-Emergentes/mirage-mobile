@@ -29,12 +29,17 @@ import kotlin.math.sqrt
 
 /**
  * How a glasses model sits on the face. The GLB contract (virtual-try-on-service) puts
- * the origin on the nose bridge, front plane, in metres; this adds a per-model nudge.
+ * the origin on the bridge at the height of the lens centres, front plane, in metres;
+ * this adds a per-model nudge from MediaPipe landmark 6 (nose bridge).
+ *
+ * Defaults (same as the service's AR_FIT_GLASSES): +1.5 mm up puts the lenses on the eye
+ * line (canonical eye centre y = 2.62 cm vs landmark 6 at 2.47 cm) and +2 mm forward
+ * leaves the front ~12 mm ahead of the cornea.
  */
 data class GlassesFit(
     val offsetXm: Float = 0f,
-    val offsetYm: Float = 0.003f,
-    val offsetZm: Float = 0.006f,
+    val offsetYm: Float = 0.0015f,
+    val offsetZm: Float = 0.002f,
     val scale: Float = 1f,
     val pitchDeg: Float = 0f,
 ) {
@@ -268,8 +273,12 @@ class GlassesRenderer(private val textureView: TextureView) : Choreographer.Fram
         const val NEAR_CM = 1.0
         const val FAR_CM = 2000.0
 
-        /** Landmark 168 (between the eyes) in MediaPipe's canonical face model, in cm. */
-        val NOSE_BRIDGE_CM = floatArrayOf(0f, 3.271027f, 5.236015f)
+        /**
+         * Landmark 6 (nose bridge, where glasses rest) in MediaPipe's canonical face model,
+         * in cm. Landmark 168 (y = 3.27) sits between the eyebrows: anchoring there left the
+         * lenses ~8 mm above the eyes.
+         */
+        val NOSE_BRIDGE_CM = floatArrayOf(0f, 2.473255f, 5.788627f)
 
         /**
          * A soft "photo studio" environment generated in code: bright top, neutral

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -5,20 +7,34 @@ import 'package:model_viewer_plus/model_viewer_plus.dart';
 
 import '../../shared/theme/mirage_theme.dart';
 import '../../shared/widgets/mirage_components.dart';
+import '../application/accessory_models_controller.dart';
 import '../domain/closet_repository.dart';
 import '../domain/garment.dart';
 import '../infrastructure/accessory_model_api.dart';
 import 'closet_widgets.dart';
 
+/// 3D viewer of an accessory (full model, with temples).
+///
+/// When the accessory has a photo but no model yet, the model is created on opening
+/// ([autoGenerate]); it takes 2–3 minutes on the GPU. While the service reports
+/// PROCESSING (another request is generating it) the status is polled every
+/// [pollEvery]. After a generation, [models] is refreshed so badges, thumbnails and
+/// the detail header update.
 class Accessory3dScreen extends StatefulWidget {
   const Accessory3dScreen({
     super.key,
     required this.garment,
     required this.api,
+    this.models,
+    this.autoGenerate = true,
+    this.pollEvery = const Duration(seconds: 5),
   });
 
   final Garment garment;
   final AccessoryModelApi api;
+  final AccessoryModelsController? models;
+  final bool autoGenerate;
+  final Duration pollEvery;
 
   @override
   State<Accessory3dScreen> createState() => _Accessory3dScreenState();
@@ -32,6 +48,7 @@ class _Accessory3dScreenState extends State<Accessory3dScreen> {
   String? _status;
   String? _error;
   String? _working;
+  Timer? _poll;
 
   @override
   void initState() {
@@ -39,11 +56,19 @@ class _Accessory3dScreenState extends State<Accessory3dScreen> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _poll?.cancel();
+    super.dispose();
+  }
+
   Future<void> _load({bool generate = false}) async {
     if (_working != null) return;
+    _poll?.cancel();
+    var generateNext = false;
     setState(() {
       _working = generate
-          ? 'Creating your 3D model…'
+          ? 'Creating your 3D model… This takes 2–3 minutes.'
           : 'Checking for a 3D model…';
       _error = null;
     });
@@ -59,10 +84,18 @@ class _Accessory3dScreenState extends State<Accessory3dScreen> {
           photo: photo?.bytes,
           contentType: photo?.contentType,
         );
+        unawaited(widget.models?.refresh(widget.garment.id));
       }
       if (!mounted) return;
       final status = await widget.api.status(widget.garment.id);
       if (!mounted) return;
+      // No model yet: create it right away instead of waiting for a tap.
+      generateNext =
+          !generate &&
+          status == null &&
+          widget.autoGenerate &&
+          !_localUpload &&
+          widget.garment.hasImage;
       final modelUri = status == 'READY'
           ? Uri.dataFromBytes(
               await widget.api.download(widget.garment.id),
@@ -99,6 +132,17 @@ class _Accessory3dScreenState extends State<Accessory3dScreen> {
       }
     } finally {
       if (mounted) setState(() => _working = null);
+    }
+    if (!mounted) return;
+    if (generateNext) {
+      await _load(generate: true);
+    } else if (_status == 'PROCESSING' && _modelUri == null) {
+      _poll = Timer(widget.pollEvery, () {
+        if (mounted) _load();
+      });
+    } else if (_status == 'READY' && !generate) {
+      // Opened on a model generated elsewhere: make sure the cache knows it.
+      unawaited(widget.models?.ensure([widget.garment.id]));
     }
   }
 
