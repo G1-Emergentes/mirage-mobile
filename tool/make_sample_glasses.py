@@ -2,7 +2,8 @@
 Genera GLB de lentes de PRUEBA con el mismo contrato que virtual-try-on-service:
   - metros, glTF (Y arriba, el frente mira a +Z)
   - ancho total 14 cm en X
-  - origen (0,0,0) en el puente nasal, en el plano frontal del marco
+  - origen (0,0,0) en el centro del puente a la altura del centro de los cristales,
+    en el plano frontal del marco (la app lo lleva al landmark 6 de MediaPipe)
   - patillas recortadas (en RA las tapa la cabeza)
 Uso: python make_sample_glasses.py <carpeta_salida>
 """
@@ -91,9 +92,8 @@ def build(half_w, half_h, exponent, frame_rgba, metallic, roughness, lens_rgba):
                           TUBE * 0.85, closed=False))
     frame = trimesh.util.concatenate(parts)
     lens = trimesh.util.concatenate(lenses)
-    # anclaje: puente nasal en el plano frontal
-    bridge_y = float(by.max())
-    T = trimesh.transformations.translation_matrix([0, -bridge_y, -frame.bounds[1, 2]])
+    # anclaje: línea de los cristales (ya centrados en y = 0) en el plano frontal
+    T = trimesh.transformations.translation_matrix([0, 0, -frame.bounds[1, 2]])
     frame.apply_transform(T)
     lens.apply_transform(T)
     frame.visual = trimesh.visual.TextureVisuals(material=PBRMaterial(

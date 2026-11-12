@@ -48,6 +48,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
       final closet = widget.module.closet;
       final inGroup = closet.inGroup(widget.group);
       final shown = _visible(inGroup);
+      // Badges and thumbnails of the 3D models: one request for the whole list. It
+      // only notifies after the response, so calling it while building is safe.
+      widget.module.models3d.ensure(
+        inGroup.where((g) => g.model3dCategory != null).map((g) => g.id),
+      );
       final colors = {for (final g in inGroup) ...g.colors}.toList()..sort();
       final label = widget.group.label.toLowerCase();
       return MirageScreen(
@@ -158,6 +163,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       garment: shown[i],
                       closet: closet,
                       tray: widget.module.tray,
+                      models: widget.module.models3d,
                       tint: tintFor(i),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(

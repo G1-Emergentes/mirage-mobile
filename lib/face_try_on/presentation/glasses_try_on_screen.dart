@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../closet/closet_module.dart';
+import '../../closet/presentation/accessory_3d_screen.dart';
 import '../../shared/theme/mirage_theme.dart';
 import '../application/glasses_try_on_controller.dart';
 import '../application/ports.dart';
@@ -17,9 +18,12 @@ class GlassesTryOnScreen extends StatefulWidget {
     required this.engine,
     required this.catalog,
     this.initialGarmentId,
+    this.onCreateModel,
   });
 
-  /// Production wiring: the closet's accessories and the Android engine.
+  /// Production wiring: the closet's accessories and the Android engine. When the
+  /// opened accessory has no AR-ready model, "Create 3D model" opens its 3D screen
+  /// (which generates it) and the catalog is reloaded on return.
   factory GlassesTryOnScreen.forCloset(
     ClosetModule module, {
     String? initialGarmentId,
@@ -31,11 +35,30 @@ class GlassesTryOnScreen extends StatefulWidget {
       models: module.accessoryModels,
     ),
     initialGarmentId: initialGarmentId,
+    onCreateModel: (context, garmentId) async {
+      final garment = module.closet.garments
+          .where((g) => g.id == garmentId)
+          .firstOrNull;
+      if (garment == null) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => Accessory3dScreen(
+            garment: garment,
+            api: module.accessoryModels,
+            models: module.models3d,
+          ),
+        ),
+      );
+    },
   );
 
   final FaceTryOnEngine engine;
   final GlassesCatalog catalog;
   final String? initialGarmentId;
+
+  /// Creates the 3D model of [initialGarmentId] when it is missing; null hides the action.
+  final Future<void> Function(BuildContext context, String garmentId)?
+  onCreateModel;
 
   @override
   State<GlassesTryOnScreen> createState() => _GlassesTryOnScreenState();
@@ -53,7 +76,19 @@ class _GlassesTryOnScreenState extends State<GlassesTryOnScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    controller.start();
+    // After the first frame: loading the catalog may load the closet, whose listeners
+    // must not be notified while this route is being built.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) controller.start();
+    });
+  }
+
+  Future<void> _createModel() async {
+    final id = widget.initialGarmentId;
+    final create = widget.onCreateModel;
+    if (id == null || create == null) return;
+    await create(context, id);
+    if (mounted) await controller.reload();
   }
 
   @override
@@ -92,7 +127,10 @@ class _GlassesTryOnScreenState extends State<GlassesTryOnScreen>
           fit: StackFit.expand,
           children: [
             widget.engine.buildView(onCreated: c.attach),
-            _Overlay(controller: c),
+            _Overlay(
+              controller: c,
+              onCreateModel: widget.onCreateModel == null ? null : _createModel,
+            ),
             if (c.photo case final photo?)
               _PhotoPreview(controller: c, photo: photo),
           ],
@@ -103,8 +141,9 @@ class _GlassesTryOnScreenState extends State<GlassesTryOnScreen>
 }
 
 class _Overlay extends StatelessWidget {
-  const _Overlay({required this.controller});
+  const _Overlay({required this.controller, this.onCreateModel});
   final GlassesTryOnController controller;
+  final VoidCallback? onCreateModel;
 
   @override
   Widget build(BuildContext context) {
@@ -162,6 +201,10 @@ class _Overlay extends StatelessWidget {
                 message,
                 error: c.error != null,
                 onClose: c.dismissNotice,
+                actionLabel: c.missingModel && c.error == null
+                    ? 'Create 3D model'
+                    : null,
+                onAction: onCreateModel,
               ),
             ),
           if (c.options.isEmpty && !c.loadingCatalog && c.error == null)
@@ -609,10 +652,20 @@ class _Pill extends StatelessWidget {
 }
 
 class _Banner extends StatelessWidget {
-  const _Banner(this.text, {required this.error, required this.onClose});
+  const _Banner(
+    this.text, {
+    required this.error,
+    required this.onClose,
+    this.actionLabel,
+    this.onAction,
+  });
   final String text;
   final bool error;
   final VoidCallback onClose;
+
+  /// Optional action next to the message (shown only with both values).
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) => Material(
@@ -623,6 +676,12 @@ class _Banner extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: Text(text)),
+          if (actionLabel != null && onAction != null)
+            TextButton(
+              key: const ValueKey('try-on-create-model'),
+              onPressed: onAction,
+              child: Text(actionLabel!),
+            ),
           IconButton(
             tooltip: 'Dismiss',
             onPressed: onClose,

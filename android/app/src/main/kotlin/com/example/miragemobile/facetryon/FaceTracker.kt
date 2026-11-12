@@ -170,7 +170,10 @@ class FaceTracker(
         private const val MAX_UNANSWERED_FRAMES = 15
         const val MODEL_ASSET = "face_landmarker.task"
 
-        /** Nose bridge, outer corners of the eyes. */
-        val DEBUG_LANDMARKS = intArrayOf(168, 33, 263)
+        /**
+         * Nose bridge (the anchor, landmark 6), outer corners of the eyes and upper eyelids:
+         * with the debug overlay on, the lens centres should sit between the eyelid points.
+         */
+        val DEBUG_LANDMARKS = intArrayOf(6, 33, 263, 159, 386)
     }
 }

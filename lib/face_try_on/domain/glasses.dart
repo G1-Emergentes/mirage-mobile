@@ -1,14 +1,18 @@
 /// Where a glasses model sits on the face.
 ///
-/// The GLB contract of virtual-try-on-service already puts the origin on the nose
-/// bridge (front plane, metres, 14 cm wide). This is the per-model nudge on top of it,
-/// relative to MediaPipe landmark 168: metres along the face's own axes
-/// (x right, y up, z out of the face), a uniform scale and a tilt.
+/// The GLB contract of virtual-try-on-service already puts the origin on the bridge at
+/// the height of the lens centres (front plane, metres, 14 cm wide). This is the
+/// per-model nudge on top of it, relative to MediaPipe landmark 6 (nose bridge): metres
+/// along the face's own axes (x right, y up, z out of the face), a uniform scale and a
+/// tilt.
+///
+/// Defaults match the service (`AR_FIT_GLASSES`): +1.5 mm up puts the lenses on the
+/// eye line and +2 mm forward leaves the front ~12 mm ahead of the cornea.
 class GlassesFit {
   const GlassesFit({
     this.offsetX = 0,
-    this.offsetY = 0.003,
-    this.offsetZ = 0.006,
+    this.offsetY = 0.0015,
+    this.offsetZ = 0.002,
     this.scale = 1,
     this.pitchDeg = 0,
   });

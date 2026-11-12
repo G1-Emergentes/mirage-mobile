@@ -48,9 +48,18 @@ class ClosetController extends ChangeNotifier {
     }
     // Image widgets can read this cache while building. Token validation can
     // notify IAM listeners, so start the request after the current build.
-    final url = Future<String?>.microtask(
-      () => _closed ? null : repository.imageUrl(garment.id),
-    ).catchError((_) => null);
+    late final Future<String?> url;
+    url =
+        Future<String?>.microtask(
+          () => _closed ? null : repository.imageUrl(garment.id),
+        ).catchError((_) {
+          // A failure is not cached: the next build asks again instead of showing
+          // the placeholder until the link expires.
+          if (identical(_links[garment.id]?.url, url)) {
+            _links.remove(garment.id);
+          }
+          return null;
+        });
     _links[garment.id] = (url: url, at: _now());
     return url;
   }
