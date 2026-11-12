@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+
 import '../domain/closet_repository.dart';
 import '../domain/garment.dart';
 
@@ -45,7 +46,20 @@ class ClosetController extends ChangeNotifier {
     if (cached != null && _now().difference(cached.at) < _linkLife) {
       return cached.url;
     }
-    final url = repository.imageUrl(garment.id).catchError((_) => null);
+    // Image widgets can read this cache while building. Token validation can
+    // notify IAM listeners, so start the request after the current build.
+    late final Future<String?> url;
+    url =
+        Future<String?>.microtask(
+          () => _closed ? null : repository.imageUrl(garment.id),
+        ).catchError((_) {
+          // A failure is not cached: the next build asks again instead of showing
+          // the placeholder until the link expires.
+          if (identical(_links[garment.id]?.url, url)) {
+            _links.remove(garment.id);
+          }
+          return null;
+        });
     _links[garment.id] = (url: url, at: _now());
     return url;
   }
@@ -73,11 +87,23 @@ class ClosetController extends ChangeNotifier {
     }
   }
 
-  Future<Garment> save(String id, GarmentDraft draft) async {
+  Future<Garment> save(
+    String id,
+    GarmentDraft draft, {
+    Uint8List? photo,
+    String? contentType,
+  }) async {
     final updated = await repository.update(id, draft);
     garments = [for (final g in garments) g.id == id ? updated : g];
     _links.remove(id);
     notifyListeners();
+    if (photo != null && contentType != null) {
+      final withImage = await repository.attachImage(id, photo, contentType);
+      garments = [for (final g in garments) g.id == id ? withImage : g];
+      _links.remove(id);
+      notifyListeners();
+      return withImage;
+    }
     return updated;
   }
 

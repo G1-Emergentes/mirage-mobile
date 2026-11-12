@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../shared/theme/mirage_theme.dart';
 import '../../shared/widgets/mirage_components.dart';
 import '../application/closet_controller.dart';
@@ -26,7 +27,7 @@ class AddItemScreen extends StatefulWidget {
 class _AddItemScreenState extends State<AddItemScreen> {
   final name = TextEditingController();
   final form = GlobalKey<FormState>();
-  String? category, color, style;
+  String? category, subcategory, color, style;
   PickedPhoto? photo;
   String? error;
   bool busy = false, picking = false;
@@ -40,6 +41,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     category = garment?.category ?? widget.initialCategory;
     if (garment != null) {
       name.text = garment.name;
+      if (garment.category == 'ACCESSORY') subcategory = garment.subcategory;
       color = garment.colors.firstOrNull;
       style = garment.styles.firstOrNull;
     }
@@ -72,9 +74,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
     return GarmentDraft(
       name: name.text.trim(),
       category: category!,
-      // A piece keeps its own subcategory unless its category changes.
-      subcategory: original != null && original.category == category
-          ? original.subcategory
+      subcategory: category == 'ACCESSORY'
+          ? subcategory
+          : original?.category == category
+          ? original?.subcategory
           : null,
       colors: color == null ? const [] : [color!],
       styles: style == null ? const [] : [style!],
@@ -95,7 +98,12 @@ class _AddItemScreenState extends State<AddItemScreen> {
     });
     try {
       if (isEdit) {
-        await widget.module.closet.save(widget.editing!.id, _draft());
+        await widget.module.closet.save(
+          widget.editing!.id,
+          _draft(),
+          photo: photo?.bytes,
+          contentType: photo?.contentType,
+        );
       } else {
         await widget.module.closet.add(
           _draft(),
@@ -130,6 +138,11 @@ class _AddItemScreenState extends State<AddItemScreen> {
               height: 190,
               child: Image.memory(photo!.bytes, fit: BoxFit.contain),
             ),
+          )
+        else if (widget.editing case final garment? when garment.hasImage)
+          SizedBox(
+            height: 190,
+            child: GarmentImage(garment: garment, closet: widget.module.closet),
           )
         else ...[
           const CircleAvatar(
@@ -241,7 +254,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
             style: const TextStyle(fontSize: 15, color: MirageColors.muted),
           ),
           const SizedBox(height: 16),
-          if (!isEdit) ...[_photoBox(), const SizedBox(height: 18)],
+          if (!isEdit || category == 'ACCESSORY') ...[
+            _photoBox(),
+            const SizedBox(height: 18),
+          ],
           MirageField(
             label: 'Name',
             controller: name,
@@ -264,6 +280,24 @@ class _AddItemScreenState extends State<AddItemScreen> {
             onChanged: (v) => setState(() => category = v),
             validator: (v) => v == null ? 'Choose a category' : null,
           ),
+          if (category == 'ACCESSORY') ...[
+            const SizedBox(height: 14),
+            _dropdown(
+              fieldKey: const ValueKey('accessory-type'),
+              label: 'Accessory type',
+              hint: 'Choose glasses, hat or other',
+              options: {
+                'GLASSES',
+                'SUNGLASSES',
+                'CAP',
+                'HAT',
+                'OTHER',
+                ?subcategory,
+              }.toList(),
+              value: subcategory,
+              onChanged: (v) => setState(() => subcategory = v),
+            ),
+          ],
           const SizedBox(height: 14),
           _dropdown(
             fieldKey: const ValueKey('color'),
