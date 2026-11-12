@@ -58,6 +58,13 @@ void main() {
       addTearDown(controller.dispose);
       await controller.signIn('mia@example.com', 'example-password');
       final boundary = GlobalKey();
+      // The shell owns (and disposes) the module it is given.
+      final module = ClosetModule(
+        accessToken: controller.avatarAccessToken,
+        closetRepository: _AuthenticatedCloset(controller.avatarAccessToken)
+          ..serveUrls = false
+          ..items = [piece('one', name: 'Linen shirt')],
+      );
       await tester.pumpWidget(
         RepaintBoundary(
           key: boundary,
@@ -66,20 +73,15 @@ void main() {
             debugShowCheckedModeBanner: false,
             home: ListenableBuilder(
               listenable: controller,
-              builder: (context, _) => AuthenticatedShell(
-                controller: controller,
-                createCloset: () => ClosetModule(
-                  accessToken: controller.avatarAccessToken,
-                  closetRepository:
-                      _AuthenticatedCloset(controller.avatarAccessToken)
-                        ..serveUrls = false
-                        ..items = [piece('one', name: 'Linen shirt')],
-                ),
-              ),
+              builder: (context, _) =>
+                  AuthenticatedShell(controller: controller, closetModule: module),
             ),
           ),
         ),
       );
+      // The shell's own Navigator (below the app's): its screens and the chat.
+      NavigatorState shellNavigator() =>
+          tester.state<NavigatorState>(find.byType(Navigator).last);
       await tester.pumpAndSettle();
       Future<void> capture(String name) async {
         await tester.runAsync(() async {
@@ -115,6 +117,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.getTopLeft(find.byType(MirageBottomNavigation)), position);
       await capture('profile-navigation');
+      // Tab 2 is the Outfit screen (main mapped it to the closet before the merge).
       await tester.tap(find.byKey(const ValueKey('navigation-2')));
       await tester.pumpAndSettle();
       expect(find.text('Create Outfit'), findsOneWidget);
@@ -127,13 +130,13 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Linen shirt'));
       await tester.pumpAndSettle();
-      final add = find.text('+ Add to Outfit');
-      await tester.ensureVisible(add);
-      await tester.tap(add);
+      // "Armar" puts the piece in a saved outfit; the look being built (the tray) is
+      // filled from it. Here it is filled directly, as main's closet tests do.
+      expect(find.byKey(const ValueKey('armar')), findsOneWidget);
+      module.tray.toggle(module.closet.garments.single);
+      shellNavigator().pop();
       await tester.pumpAndSettle();
-      tester.state<NavigatorState>(find.byType(Navigator)).pop();
-      await tester.pumpAndSettle();
-      tester.state<NavigatorState>(find.byType(Navigator)).pop();
+      shellNavigator().pop();
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('navigation-2')));
       await tester.pumpAndSettle();
@@ -143,7 +146,7 @@ void main() {
       await tester.tap(tryOn);
       await tester.pumpAndSettle();
       expect(find.text('Ready to Try'), findsOneWidget);
-      tester.state<NavigatorState>(find.byType(Navigator)).pop();
+      shellNavigator().pop();
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('navigation-3')));
       await tester.pumpAndSettle();
