@@ -1,3 +1,6 @@
 {
-  "API_BASE_URL": "http://127.0.0.1:8080"
+  "API_BASE_URL": "http://127.0.0.1:8080",
+  "CLOSET_BASE_URL": "http://127.0.0.1:8081/api/v1",
+  "TRYON_BASE_URL": "http://127.0.0.1:8082/api/v1",
+  "RECOMMENDATION_BASE_URL": "http://127.0.0.1:8085/api/v1"
 }
