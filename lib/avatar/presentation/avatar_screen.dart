@@ -35,14 +35,17 @@ class _AvatarScreenState extends State<AvatarScreen> {
     controller =
         widget.controller ??
         AvatarController(DioAvatarRepository(accessToken: widget.accessToken));
-    if (widget.controller == null) controller.restore();
-    _recoverPhoto().catchError((_) {
-      if (mounted) {
-        setState(
-          () => photoError =
-              'Photo recovery is unavailable. Please select your photos again.',
-        );
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (widget.controller == null) controller.restore();
+      _recoverPhoto().catchError((_) {
+        if (mounted) {
+          setState(
+            () => photoError =
+                'Photo recovery is unavailable. Please select your photos again.',
+          );
+        }
+      });
     });
   }
 
@@ -278,7 +281,9 @@ class _AvatarScreenState extends State<AvatarScreen> {
             OutlinedButton(
               onPressed: picking ? null : () => pick(1),
               child: Text(
-                photos[1] == null ? 'Use a body photo instead' : 'Replace photo',
+                photos[1] == null
+                    ? 'Use a body photo instead'
+                    : 'Replace photo',
               ),
             ),
             if (photoError case final String message) ...[
@@ -307,7 +312,9 @@ class _AvatarScreenState extends State<AvatarScreen> {
               ),
               if (photoKept) ...[
                 const SizedBox(height: 12),
-                notice('Photo saved. Next: pick up to 3 pieces in your closet and tap Try on.'),
+                notice(
+                  'Photo saved. Next: pick up to 3 pieces in your closet and tap Try on.',
+                ),
                 const SizedBox(height: 12),
                 MirageButton(
                   key: const ValueKey('go-closet'),
@@ -417,11 +424,10 @@ class _AvatarScreenState extends State<AvatarScreen> {
               ],
             ),
             const SizedBox(height: 14),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFEEEBE4),
-                borderRadius: BorderRadius.circular(18),
-              ),
+            Material(
+              color: const Color(0xFFEEEBE4),
+              borderRadius: BorderRadius.circular(18),
+              clipBehavior: Clip.antiAlias,
               child: ListTile(
                 leading: photos[2] == null
                     ? asset('person', 28)

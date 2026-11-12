@@ -1,14 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../closet/closet_module.dart';
-import '../closet/presentation/closet_screen.dart';
 import '../closet/domain/garment.dart';
+import '../closet/presentation/category_screen.dart';
+import '../closet/presentation/closet_screen.dart';
 import '../closet/presentation/try_on_screens.dart';
+import '../explore/presentation/screens/explore_screen.dart';
+import '../face_try_on/presentation/glasses_try_on_screen.dart';
+import '../home/presentation/screens/home_screen.dart';
 import '../recommendation/chat_controller.dart';
 import '../recommendation/chat_panel.dart';
 import '../recommendation/recommendation_repository.dart';
 import '../shared/theme/mirage_theme.dart';
 import '../iam/application/iam_controller.dart';
 import '../iam/presentation/screens/account_screen.dart';
+import '../outfit/presentation/screens/outfit_screen.dart';
+import '../outfit/presentation/screens/recommendations_screen.dart';
 import '../shared/widgets/mirage_bottom_navigation.dart';
 
 class AuthenticatedShell extends StatefulWidget {
@@ -51,6 +60,16 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     super.dispose();
   }
 
+  // Screens open inside the shell's own Navigator, so the stylist chat stays on top.
+  void _open(Widget screen) => navigator.currentState?.push<void>(
+    MaterialPageRoute(builder: (_) => screen),
+  );
+
+  void _openCategory(ClosetGroup group) {
+    if (!closet.closet.loaded) unawaited(closet.closet.load());
+    _open(CategoryScreen(module: closet, group: group));
+  }
+
   void _openChat() {
     _chat ??= ChatController(
       widget.recommendationRepository ??
@@ -62,16 +81,11 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _chat!.initialize();
   }
 
+  // Every tab has its screen (Home, Closet, Outfit, Explore, Profile): switching tabs
+  // returns to the tab's root.
   void _select(int index) {
-    selected.value = index == 2 ? 1 : index;
+    selected.value = index;
     navigator.currentState?.popUntil((route) => route.isFirst);
-    if (index == 2 && !closet.tray.isEmpty) {
-      navigator.currentState?.push(
-        MaterialPageRoute<void>(
-          builder: (_) => ReadyToTryScreen(module: closet),
-        ),
-      );
-    }
   }
 
   Future<void> _tryOutfit(List<Garment> proposed) async {
@@ -139,21 +153,42 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         selectedIndex: index,
         onSelected: _select,
       );
-      if (index == 4) {
-        return AccountScreen(
+      return switch (index) {
+        1 => ClosetScreen(module: closet, bottomNavigationBar: navigation),
+        2 => ListenableBuilder(
+          listenable: closet.tray,
+          builder: (context, _) => OutfitScreen(
+            navigation: navigation,
+            pieces: closet.tray.items,
+            closet: closet.closet,
+            onSelect: _openCategory,
+            onReset: closet.tray.clear,
+            onHome: () => _select(0),
+            onAdd: () => _select(1),
+            onTryOn: () => _open(ReadyToTryScreen(module: closet)),
+          ),
+        ),
+        3 => ExploreScreen(navigation: navigation, onHome: () => _select(0)),
+        4 => AccountScreen(
           controller: widget.controller,
           bottomNavigationBar: navigation,
           onContinueHome: () => _select(0),
           onOpenCloset: () => _select(1),
-        );
-      }
-      if (index == 1) {
-        return ClosetScreen(module: closet, bottomNavigationBar: navigation);
-      }
-      return Scaffold(
-        body: const SizedBox.expand(key: ValueKey('home-placeholder')),
-        bottomNavigationBar: navigation,
-      );
+        ),
+        _ => ListenableBuilder(
+          listenable: closet.closet,
+          builder: (context, _) => HomeScreen(
+            navigation: navigation,
+            closet: closet.closet,
+            displayName: widget.controller.account?.displayName,
+            onCloset: () => _select(1),
+            onCategory: _openCategory,
+            onExplore: () => _select(3),
+            onRecommendations: () => _open(const RecommendationsScreen()),
+            onTryOnGlasses: () => _open(GlassesTryOnScreen.forCloset(closet)),
+          ),
+        ),
+      };
     },
   );
 
