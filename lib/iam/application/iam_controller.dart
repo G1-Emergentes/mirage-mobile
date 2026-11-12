@@ -25,21 +25,17 @@ class IamController extends ChangeNotifier {
   Account? get account => _account;
   bool get signedIn => _session != null;
 
-  // One account check shared by every request that needs the token at the same time.
-  // queryCurrentAccount() runs through _run(), which refuses a second call while one
-  // is busy: without this, only one of several concurrent requests (the photos of a
-  // closet screen, the 3D badges...) got a token and the rest failed as unauthorized.
-  Future<bool>? _accountCheck;
+  Future<String>? _tokenRequest;
 
-  Future<String> avatarAccessToken() async {
-    final check = _accountCheck ??= queryCurrentAccount().whenComplete(
-      () => _accountCheck = null,
-    );
-    if (!await check || _session == null) {
-      throw const AuthFailure(
-        'unauthorized',
-        'Sign in again to save your avatar.',
-      );
+  // Image tiles and chat can request authentication together; refresh only once.
+  Future<String> avatarAccessToken() =>
+      _tokenRequest ??= Future<String>.microtask(
+        _validatedAccessToken,
+      ).whenComplete(() => _tokenRequest = null);
+
+  Future<String> _validatedAccessToken() async {
+    if (!await queryCurrentAccount() || _session == null) {
+      throw const AuthFailure('unauthorized', 'Sign in again to continue.');
     }
     return _session!.accessToken;
   }
@@ -141,7 +137,11 @@ class IamController extends ChangeNotifier {
   Future<bool> resendVerification(String email) =>
       _run(() => _repository.resendVerification(EmailAddress(email)));
 
-  Future<bool> queryCurrentAccount() => _run(() async {
+  Future<bool>? _accountRequest;
+  Future<bool> queryCurrentAccount() => _accountRequest ??=
+      _queryCurrentAccount().whenComplete(() => _accountRequest = null);
+
+  Future<bool> _queryCurrentAccount() => _run(() async {
     var session = _session;
     if (session == null) return;
     try {

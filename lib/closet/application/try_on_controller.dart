@@ -15,6 +15,10 @@ class TryOnController extends ChangeNotifier {
   TryOnPhase phase = TryOnPhase.idle;
   TryOnState state = TryOnState.pending;
   Uint8List? result;
+
+  /// Piece ids the current `result` was generated for, so saving an outfit only attaches the
+  /// picture when it really shows that combination.
+  List<String> generatedFor = const [];
   String? error;
   bool _closed = false;
 
@@ -31,6 +35,7 @@ class TryOnController extends ChangeNotifier {
     state = TryOnState.pending;
     error = null;
     result = null;
+    generatedFor = [for (final garment in garments) garment.id];
     notifyListeners();
     try {
       var job = await repository.start([

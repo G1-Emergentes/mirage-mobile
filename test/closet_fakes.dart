@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:miragemobile/closet/domain/closet_repository.dart';
+import 'package:miragemobile/closet/domain/outfit.dart';
 import 'package:miragemobile/closet/domain/garment.dart';
 
 /// A valid 1x1 PNG, so `Image.memory` can decode it in widget tests.
@@ -111,6 +112,59 @@ class FakeTryOn implements TryOnRepository {
       _job(id, states[(++polls).clamp(0, states.length - 1)]);
   @override
   Future<Uint8List> image(String id) async => tinyPng;
+  @override
+  void close() {}
+}
+
+
+class FakeOutfits implements OutfitRepository {
+  final saved = <SavedOutfit>[];
+  final images = <String, int>{};
+  bool failImage = false;
+
+  SavedOutfit _make(String id, OutfitDetails d, List<String> ids, {bool image = false}) =>
+      SavedOutfit(
+        id: id,
+        name: d.name,
+        occasion: d.occasion,
+        style: d.style,
+        garmentIds: ids,
+        hasImage: image,
+        complete: true,
+        imageVersion: image ? 1 : 0,
+      );
+
+  @override
+  Future<List<SavedOutfit>> list() async => List.of(saved);
+  @override
+  Future<SavedOutfit> create(OutfitDetails d, List<String> ids) async {
+    final o = _make('o${saved.length}', d, ids);
+    saved.add(o);
+    return o;
+  }
+
+  @override
+  Future<SavedOutfit> update(String id, OutfitDetails d, List<String> ids) async {
+    final i = saved.indexWhere((o) => o.id == id);
+    // Like the server: changing the pieces clears the look picture.
+    final same = saved[i].garmentIds.toSet().containsAll(ids) && ids.length == saved[i].garmentIds.length;
+    saved[i] = _make(id, d, ids, image: same && saved[i].hasImage);
+    return saved[i];
+  }
+
+  @override
+  Future<SavedOutfit> attachImage(String id, Uint8List bytes, String type) async {
+    if (failImage) throw const ClosetException('SERVICE_UNAVAILABLE');
+    final i = saved.indexWhere((o) => o.id == id);
+    images[id] = (images[id] ?? 0) + 1;
+    saved[i] = _make(id, OutfitDetails(name: saved[i].name, occasion: saved[i].occasion, style: saved[i].style), saved[i].garmentIds, image: true);
+    return saved[i];
+  }
+
+  @override
+  Future<String?> imageUrl(String id) async => null;
+  @override
+  Future<void> remove(String id) async => saved.removeWhere((o) => o.id == id);
   @override
   void close() {}
 }

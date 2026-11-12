@@ -1,6 +1,6 @@
 # Mirage Mobile
 
-Cliente Flutter de Mirage/ReWear, inicialmente limitado al módulo IAM. Usa Dio,
+Cliente Flutter de Mirage/ReWear con IAM, Digital Closet, prueba virtual y asistente de recomendaciones. Usa Dio,
 arquitectura modular y capas de dominio, aplicación, infraestructura y presentación.
 Ver [ARCHITECTURE.md](ARCHITECTURE.md) para alcance y límites.
 
@@ -21,7 +21,7 @@ Copy-Item config/local.example.json config/local.json  # solo si no existe
 ```
 
 `config/local.json` ya está preparado en esta PC y está ignorado por Git. Contiene
-solo `API_BASE_URL`, ahora `http://127.0.0.1:8080`. Se lee con
+las URLs públicas de los servicios (IAM 8080, Closet 8081, prueba virtual 8082 y Recommendation 8085). Se lee con
 `--dart-define-from-file`; no es un asset ni necesita `flutter_dotenv`.
 Las variables compiladas pueden extraerse de una app: nunca pongas secretos,
 service_role, contraseñas de BD ni credenciales SMTP allí.
