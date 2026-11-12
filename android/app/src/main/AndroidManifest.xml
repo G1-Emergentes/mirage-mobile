@@ -1,9 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Virtual try-on: front camera, processed on the device only. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- Saving try-on photos on Android 7-9; Android 10+ uses MediaStore without permission. -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/>
+    <uses-feature android:name="android.hardware.camera.front" android:required="false"/>
     <application
         android:allowBackup="false"
         android:label="Mirage"
         android:name="${applicationName}"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

@@ -38,6 +38,7 @@ dependencies:
   flutter_svg: ^2.3.0
   image_picker: ^1.2.3
   webview_flutter: ^4.14.1
+  model_viewer_plus: ^1.10.0
   shared_preferences: ^2.5.5
   flutter_secure_storage: ^11.2.0
   google_sign_in: ^7.2.0
@@ -96,9 +97,11 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
   assets:
+    - assets/design/
     - assets/navigation/
     - assets/avatar/
     - assets/iam/
+    - assets/try_on/
   fonts:
     - family: Lora
       fonts:

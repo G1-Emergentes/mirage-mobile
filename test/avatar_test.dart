@@ -123,12 +123,14 @@ void main() {
         }, 'Oversized'),
         true,
       );
+      expect(first.model?.path, '/view/test-refined');
       expect(first.saved, false);
       await first.save();
       expect(first.saved, true);
       first.dispose();
       final reopened = AvatarController(repository);
       await reopened.restore();
+      expect(reopened.model?.path, '/view/test-saved');
       expect(reopened.measurements['height'], 175);
       expect(reopened.fitPreference, 'Oversized');
       expect(reopened.saved, true);

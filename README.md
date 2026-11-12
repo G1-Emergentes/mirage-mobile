@@ -57,9 +57,13 @@ bajo el mismo origen o una lista explícita de orígenes permitidos.
 - Validaciones, contraseña visible/oculta, errores de conexión y estados de carga.
 
 Google está conectado en Android; Apple sigue pendiente. La cuenta conecta con el módulo
-de avatar y medidas. Tras login o restaurar sesión se abre Home vacío, con la
-barra inferior fija del Figma. Solo Home y Profile están habilitados. Closet,
-Create y Explore quedan sin funciones y no llaman a otros bounded contexts.
+de avatar y medidas. Tras login o restaurar sesión se abre Home. La barra inferior
+permite ir a Closet, Create, Explore y Profile. Closet y Create comparten una
+bandeja de prendas y el flujo de prueba de outfits. Para probarlo con datos reales,
+inicia IAM, Digital Closet y el worker de visualización. Consulta la
+[configuración del módulo Closet](lib/closet/README.md) y el
+[alcance de las pantallas](ARCHITECTURE.md#pantallas-de-mirage-y-preparación-para-el-api-gateway).
+
 Profile muestra la cuenta, cierre de sesión y **My digital avatar**.
 
 El avatar guardado no se carga ni se vuelve a escanear al entrar en la app.
@@ -117,3 +121,10 @@ Referencia: [configuración oficial de google_sign_in para Android](https://pub.
 flutter analyze
 flutter test
 ```
+
+**Profile** usa el contrato de IAM para editar el nombre y la URL HTTPS de la
+foto. Al quitar la URL se muestra la imagen local predeterminada. Measurements
+guarda los cinco campos en centímetros, y Preferences guarda las listas de
+estilos, colores y categorías. El menú conserva las opciones previstas en el
+diseño y señala las que esperan un servicio o documento oficial. Para salir,
+abre el engranaje de Profile y selecciona Log Out.

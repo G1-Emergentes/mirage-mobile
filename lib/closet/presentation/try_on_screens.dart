@@ -224,7 +224,8 @@ class _ReadyToTryScreenState extends State<ReadyToTryScreen> {
                   ? null
                   : () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => CreatingLookScreen(module: widget.module),
+                        builder: (_) =>
+                            CreatingLookScreen(module: widget.module),
                       ),
                     ),
             ),
@@ -299,14 +300,11 @@ class _CreatingLookScreenState extends State<CreatingLookScreen> {
             ),
           ),
         ),
-        Text(
-          switch (step) {
-            _Step.done => 'Done',
-            _Step.running => 'In progress',
-            _Step.next => 'Up next',
-          },
-          style: const TextStyle(fontSize: 12, color: MirageColors.muted),
-        ),
+        Text(switch (step) {
+          _Step.done => 'Done',
+          _Step.running => 'In progress',
+          _Step.next => 'Up next',
+        }, style: const TextStyle(fontSize: 12, color: MirageColors.muted)),
       ],
     ),
   );
@@ -322,7 +320,9 @@ class _CreatingLookScreenState extends State<CreatingLookScreen> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute<void>(builder: (_) => AiLookScreen(module: module)),
+            MaterialPageRoute<void>(
+              builder: (_) => AiLookScreen(module: module),
+            ),
           );
         });
       }
@@ -378,7 +378,10 @@ class _CreatingLookScreenState extends State<CreatingLookScreen> {
             ),
             const SizedBox(height: 18),
             if (failed) ...[
-              MirageNotice(tryOn.error ?? 'Could not create your look.', error: true),
+              MirageNotice(
+                tryOn.error ?? 'Could not create your look.',
+                error: true,
+              ),
               const SizedBox(height: 14),
               MirageButton(
                 key: const ValueKey('retry'),
@@ -470,7 +473,9 @@ class AiLookScreen extends StatelessWidget {
                       builder: (_) => CreatingLookScreen(module: module),
                     ),
                   ),
-                  style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 48),
+                  ),
                   child: const Text('Regenerate'),
                 ),
               ),
@@ -483,7 +488,9 @@ class AiLookScreen extends StatelessWidget {
                       builder: (_) => CompareLookScreen(module: module),
                     ),
                   ),
-                  style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 48),
+                  ),
                   child: const Text('Compare'),
                 ),
               ),

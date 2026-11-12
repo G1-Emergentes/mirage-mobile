@@ -64,9 +64,11 @@ void main() {
     );
     await tap(tester, 'Log In');
     expect(repository.logins, 1);
-    expect(find.byKey(const ValueKey('home-placeholder')), findsOneWidget);
+    expect(find.text('What should we\nwear today?'), findsOneWidget);
     await tap(tester, 'Profile');
-    expect(find.text('Your profile.'), findsOneWidget);
+    expect(find.text('Body Profile'), findsOneWidget);
+    await tester.tap(find.byTooltip('Account Settings'));
+    await tester.pumpAndSettle();
     await tap(tester, 'Log Out');
     expect(repository.logouts, 1);
     expect(find.text('Your style.\nYour space.'), findsOneWidget);
@@ -80,7 +82,7 @@ void main() {
     await tap(tester, 'Skip');
     await tap(tester, 'Continue with Google');
     expect(repository.googleLogins, 1);
-    expect(find.byKey(const ValueKey('home-placeholder')), findsOneWidget);
+    expect(find.text('What should we\nwear today?'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

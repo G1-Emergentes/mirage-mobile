@@ -97,6 +97,20 @@ class Garment {
   String get kind => humanize(subcategory ?? category);
   String get colorLabel => colors.isEmpty ? '' : humanize(colors.first);
   String get subtitle => [kind, if (colors.isNotEmpty) colorLabel].join(' · ');
+
+  String? get model3dCategory {
+    if (category != 'ACCESSORY') return null;
+    return switch (subcategory?.toUpperCase()) {
+      'GLASSES' || 'EYEGLASSES' || 'SUNGLASSES' => 'glasses',
+      'HAT' ||
+      'CAP' ||
+      'BASEBALL_CAP' ||
+      'BUCKET_HAT' ||
+      'BEANIE' ||
+      'FEDORA' => 'hat',
+      _ => null,
+    };
+  }
 }
 
 /// Editable attributes: what the API accepts when creating or replacing a garment.
